@@ -24,29 +24,29 @@ st.markdown("""
         font-size: 16px;
         color: #666;
         text-align: center;
-        margin-bottom: 48px;
+        margin-bottom: 36px;
     }
     .card {
         background: white;
         border-radius: 16px;
-        padding: 36px 28px 24px 28px;
+        padding: 24px 24px 16px 24px;
         text-align: center;
         box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         border: 2px solid transparent;
-        height: 100%;
+        margin-bottom: 0px;
     }
-    .card-icon { font-size: 52px; margin-bottom: 16px; }
+    .card-icon { font-size: 40px; margin-bottom: 10px; }
     .card-title {
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 700;
         color: #1a1a2e;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
     .card-desc {
-        font-size: 13px;
+        font-size: 12px;
         color: #777;
-        line-height: 1.7;
-        margin-bottom: 16px;
+        line-height: 1.6;
+        margin-bottom: 10px;
     }
     .badge {
         display: inline-block;
@@ -54,10 +54,26 @@ st.markdown("""
         font-weight: 600;
         padding: 3px 10px;
         border-radius: 20px;
-        margin-bottom: 20px;
+        margin-bottom: 4px;
     }
     .badge-ready { background: #e8f5e9; color: #2e7d32; }
     .badge-soon  { background: #fff3e0; color: #e65100; }
+
+    /* 버튼 크게 */
+    [data-testid="stPageLink"] a {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        padding: 14px 0px !important;
+        border-radius: 12px !important;
+        background-color: #1a1a2e !important;
+        color: white !important;
+        display: block;
+        text-align: center;
+    }
+    [data-testid="stPageLink"] a:hover {
+        background-color: #2e2e5e !important;
+    }
+
     .divider {
         border: none;
         border-top: 1px solid #e0e0e0;
@@ -68,7 +84,7 @@ st.markdown("""
         text-align: center;
         font-size: 12px;
         color: #aaa;
-        margin-top: 48px;
+        margin-top: 24px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -91,7 +107,7 @@ with col1:
         <span class='badge badge-ready'>✅ 사용 가능</span>
     </div>
     """, unsafe_allow_html=True)
-    st.page_link("pages/mosfet.py", label="→ MOSFET 시뮬레이터 시작", use_container_width=True)
+    st.page_link("pages/mosfet.py", label="🔌 MOSFET 시뮬레이터 시작", use_container_width=True)
 
 with col2:
     st.markdown("""
@@ -106,7 +122,7 @@ with col2:
         <span class='badge badge-soon'>🚧 준비 중</span>
     </div>
     """, unsafe_allow_html=True)
-    st.page_link("pages/bjt.py", label="→ BJT 시뮬레이터 시작", use_container_width=True)
+    st.page_link("pages/bjt.py", label="🔬 BJT 시뮬레이터 시작", use_container_width=True)
 
 st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 st.markdown("<div class='footer'>Semiconductor Device Simulator · Powered by Streamlit & Gemini AI</div>",
