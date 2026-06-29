@@ -365,16 +365,23 @@ with col_mid:
     vgs_eff_plot = max(abs_vgs - abs_vth, 0.0)
 
     bend_sign = -1.0 if device == "NMOS" else +1.0
-    bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55
-    drop_d    = bend_sign * min(abs_vds, 3.0) * 0.4   # ★수정: PMOS에서도 드레인 기울기 방향이 맞도록 bend_sign 적용
+    bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55   # 게이트에 의한 반전(채널 밴드 끌어내림) 크기
+    drop_d    = bend_sign * min(abs_vds, 3.0) * 0.4         # V_DS에 의한 전위 강하(방향은 소자별)
 
     x_src = np.linspace(0.0, 1.0, 50)
     x_ch  = np.linspace(1.0, 2.0, 80)
     x_drn = np.linspace(2.0, 3.0, 50)
 
+    # ── 물리 모델 ─────────────────────────────────────────
+    #  • 소스/드레인 = 저저항 벌크 → 밴드 평탄
+    #  • 인가전압 V_DS(drop_d)는 '채널'에서 떨어진다 (실제로 채널·핀치오프 영역에 걸림)
+    #    → 소스↔드레인 페르미 준위 간격 = 정확히 qV_DS (게이트 영향 없음)
+    #  • 게이트 반전(bend_ch)은 채널 밴드를 페르미 준위 쪽으로 끌어내리는 dip으로 표현
+    #    (포화 영역에선 드레인 근처에서 다시 솟아오름 = 핀치오프/공핍 영역)
+    t_ch   = (x_ch - 1.0)                       # 0 → 1
     ec_src = np.full_like(x_src, E0)
-    ec_ch  = np.linspace(E0, E0 + bend_ch, len(x_ch))
-    ec_drn = np.linspace(E0 + bend_ch, E0 + bend_ch + drop_d, len(x_drn))
+    ec_ch  = E0 + drop_d * t_ch + bend_ch * np.sin(np.pi * t_ch)
+    ec_drn = np.full_like(x_drn, E0 + drop_d)
 
     ev_src = ec_src - Eg
     ev_ch  = ec_ch  - Eg
@@ -384,12 +391,16 @@ with col_mid:
     ec_all = np.concatenate([ec_src, ec_ch, ec_drn])
     ev_all = np.concatenate([ev_src, ev_ch, ev_drn])
 
-    # ★수정: 페르미 준위를 소자 종류에 맞는 밴드 쪽에 배치
-    #   - NMOS: 소스/드레인 = n+ → E_f 는 전도대(E_c) 근처
-    #   - PMOS: 소스/드레인 = p+ → E_f 는 가전자대(E_v) 근처
+    # ── 페르미 준위 ───────────────────────────────────────
+    #  • NMOS: 소스/드레인 = n+ → E_f 는 전도대(E_c) 근처
+    #  • PMOS: 소스/드레인 = p+ → E_f 는 가전자대(E_v) 근처
+    #  • 소스↔드레인 간격 = (E0+drop_d) - E0 = drop_d = qV_DS (게이트 영향 없음) ✓
     ef_offset  = -0.15 if device == "NMOS" else -(Eg - 0.15)
     ef_src_val = E0 + ef_offset
-    ef_drn_val = (E0 + bend_ch + drop_d) + ef_offset
+    ef_drn_val = (E0 + drop_d) + ef_offset
+
+    # 채널 중앙 전도대 위치 (반전층 레이블 배치용)
+    ch_mid_ec = E0 + 0.5 * drop_d + bend_ch
 
     fig_band = go.Figure()
 
@@ -433,17 +444,18 @@ with col_mid:
         font=dict(size=9, color='gray'), xanchor='left'
     )
 
-    # 동작 영역 레이블
+    # 동작 영역 레이블 (채널 밴드 근처, 밴드선과 겹치지 않게 배치)
+    label_y = ch_mid_ec - bend_sign * 0.35
     if region == "Saturation" and vgs_eff_plot > 0:
         fig_band.add_annotation(
-            x=1.5, y=E0 + bend_ch - 0.15,
+            x=1.5, y=label_y,
             text="Inversion Layer<br>(Saturation)",
             showarrow=False, font=dict(size=9, color='#27ae60'),
             bgcolor='#eafaf1', bordercolor='#27ae60', borderwidth=1
         )
     elif region == "Linear" and vgs_eff_plot > 0:
         fig_band.add_annotation(
-            x=1.5, y=E0 + bend_ch - 0.15,
+            x=1.5, y=label_y,
             text="Channel Formed<br>(Linear)",
             showarrow=False, font=dict(size=9, color='#f39c12'),
             bgcolor='#fef9e7', bordercolor='#f39c12', borderwidth=1
