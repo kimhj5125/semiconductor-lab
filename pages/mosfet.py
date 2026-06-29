@@ -152,10 +152,17 @@ with col_left:
 
     c1, c2 = st.columns(2)
     with c1:
-        label_vds = "|V_DS| (V)" if device == "PMOS" else "V_DS (V)"
-        st.metric(label_vds, f"{vds:.2f} V")
+        st.markdown(f"""
+        <div style='padding:8px 0'>
+            <div style='font-size:11px;color:#666;margin-bottom:2px'>인가전압 |V_DS|</div>
+            <div style='font-size:20px;font-weight:700;color:#1a1a2e'>{vds:.2f} V</div>
+        </div>""", unsafe_allow_html=True)
     with c2:
-        st.metric("I_D (mA)", f"{id_mA:.2f} mA")
+        st.markdown(f"""
+        <div style='padding:8px 0'>
+            <div style='font-size:11px;color:#666;margin-bottom:2px'>드레인전류 |I_D|</div>
+            <div style='font-size:20px;font-weight:700;color:#1a1a2e'>{id_mA:.2f} mA</div>
+        </div>""", unsafe_allow_html=True)
     st.divider()
 
     # ── MOSFET 구조 시각화 ───────────────────────────────
@@ -317,42 +324,30 @@ with col_mid:
     x_ch  = np.linspace(1.2, 2.8, 80)
     x_drn = np.linspace(2.8, 3.6, 50)
 
-    Eg      = 1.12
-    E0      = 2.0          # Source 쪽 Ec 기준
-    OX_BAR  = 3.1          # SiO2 전도대 배리어 (Si 대비 ~3.1 eV 높음)
+    Eg   = 1.12
+    E0   = 2.0    # Source Ec 기준
 
-    # NMOS/PMOS 공통: 슬라이더는 양수, 내부적으로 절댓값 처리
     abs_vgs = abs(vgs)
     abs_vds = abs(vds)
     abs_vth = abs(vth)
     vgs_eff_plot = max(abs_vgs - abs_vth, 0.0)
 
-    # NMOS: 게이트 양전압 → 채널 Ec 아래로 벤딩 (음의 방향)
-    # PMOS: 게이트 음전압(절댓값) → 채널 Ec 위로 벤딩 (양의 방향)
+    # NMOS: 채널 Ec 아래로 벤딩 / PMOS: 위로
     bend_sign = -1.0 if device == "NMOS" else +1.0
-    bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55   # 채널 밴드벤딩 크기
-    drop_d    = -min(abs_vds, 3.0) * 0.4                    # Drain: VDS만큼 에너지 낮아짐 (전자 기준)
+    bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55
+    # Drain: VDS만큼 에너지 낮아짐
+    drop_d    = -min(abs_vds, 3.0) * 0.4
 
-    # ── Ec 계산 ──────────────────────────────────────────
+    # ── Ec 계산 (SiO2 배리어 없이 연속 선형 연결) ───────
     ec_src = np.full_like(x_src, E0)
 
-    # SiO2: Source Ec에서 높은 배리어로 올라갔다 내려오는 형태
-    ec_ox_peak = E0 + OX_BAR
-    # 산화막 좌측: Source Ec → 배리어 피크
-    ec_ox_left  = np.linspace(E0, ec_ox_peak, 10)
-    # 산화막 우측: 배리어 피크 → 채널 시작 Ec
     ec_ch_start = E0 + bend_ch * 0.5
-    ec_ox_right = np.linspace(ec_ox_peak, ec_ch_start, 10)
-    ec_ox = np.concatenate([ec_ox_left, ec_ox_right])
+    ec_ox       = np.linspace(E0, ec_ch_start, len(x_ox))
 
-    # Channel: 게이트 전압에 따라 벤딩
     ec_ch_end = E0 + bend_ch
-    ec_ch = np.linspace(ec_ch_start, ec_ch_end, len(x_ch))
+    ec_ch     = np.linspace(ec_ch_start, ec_ch_end, len(x_ch))
 
-    # Drain: VDS만큼 추가로 낮아짐
-    ec_drn_start = ec_ch_end
-    ec_drn_end   = ec_ch_end + drop_d
-    ec_drn = np.linspace(ec_drn_start, ec_drn_end, len(x_drn))
+    ec_drn = np.linspace(ec_ch_end, ec_ch_end + drop_d, len(x_drn))
 
     # ── Ev = Ec - Eg ─────────────────────────────────────
     ev_src = ec_src - Eg
@@ -360,39 +355,27 @@ with col_mid:
     ev_ch  = ec_ch  - Eg
     ev_drn = ec_drn - Eg
 
-    # ── x 축 재구성 (SiO2 구간 분리) ──────────────────────
-    x_ox_left  = np.linspace(0.8, 1.0, 10)
-    x_ox_right = np.linspace(1.0, 1.2, 10)
-    x_ox_full  = np.concatenate([x_ox_left, x_ox_right])
-
-    x_all  = np.concatenate([x_src, x_ox_full, x_ch, x_drn])
-    ec_all = np.concatenate([ec_src, ec_ox,     ec_ch, ec_drn])
-    ev_all = np.concatenate([ev_src, ev_ox,     ev_ch, ev_drn])
+    x_all  = np.concatenate([x_src, x_ox,  x_ch,  x_drn])
+    ec_all = np.concatenate([ec_src, ec_ox, ec_ch, ec_drn])
+    ev_all = np.concatenate([ev_src, ev_ox, ev_ch, ev_drn])
 
     # ── 플롯 ─────────────────────────────────────────────
     ax_b.plot(x_all, ec_all, color='#e74c3c', lw=2.0, label="$E_c$")
     ax_b.plot(x_all, ev_all, color='#2980b9', lw=2.0, label="$E_v$")
 
-    # SiO2 배경 음영
-    ax_b.axvspan(0.8, 1.2, color='#e0e0e0', alpha=0.5, zorder=0)
-    ax_b.text(1.0, E0 + OX_BAR + 0.05, "SiO₂",
-              ha='center', fontsize=7, color='#555', style='italic')
+    # SiO2 배경 음영만 (텍스트 없음)
+    ax_b.axvspan(0.8, 1.2, color='#e0e0e0', alpha=0.4, zorder=0)
 
     # ── Fermi level ───────────────────────────────────────
-    # Source EF: 중간갭 위쪽 (n형 Source 기준)
     ef_src = E0 - Eg / 2 + 0.1
-    # Drain EF: Source EF에서 VDS(전위차)만큼 낮아짐
     ef_drn = ef_src + drop_d
 
     ax_b.hlines(ef_src, 0.0, 0.8, colors='purple', lw=1.2,
                 linestyles=':', alpha=0.85, label="$E_F$")
     ax_b.hlines(ef_drn, 2.8, 3.6, colors='purple', lw=1.2,
                 linestyles=':', alpha=0.85)
-    # Source/Drain EF 레이블
-    ax_b.text(0.05, ef_src + 0.05, "$E_{FS}$", fontsize=6.5, color='purple')
-    ax_b.text(2.85, ef_drn + 0.05, "$E_{FD}$", fontsize=6.5, color='purple')
 
-    # ── Eg 양방향 화살표 (Source) ─────────────────────────
+    # ── Eg 양방향 화살표 ─────────────────────────────────
     ax_b.annotate("", xy=(0.3, ec_src[0]), xytext=(0.3, ev_src[0]),
                   arrowprops=dict(arrowstyle='<->', color='gray', lw=1.0))
     ax_b.text(0.35, (ec_src[0] + ev_src[0]) / 2,
