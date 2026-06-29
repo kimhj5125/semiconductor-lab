@@ -80,7 +80,7 @@ with st.sidebar:
     if st.button("⬅ 홈으로 돌아가기", use_container_width=True):
         st.switch_page("app.py")
 
-    st.markdown("### 🔬 제어 및 입력 패널")
+    st.markdown("### 🎛️ 제어 및 입력 패널")
 
     bjt_type = st.selectbox("소자 타입 선택", ["NPN", "PNP"])
 
@@ -114,7 +114,7 @@ with st.sidebar:
                     value=st.session_state.v_bc_val, label_visibility="collapsed")
 
     st.markdown("---")
-    st.markdown("<span style='font-size:0.8rem;font-weight:700;color:#1e293b;'>💬 ASK AI</span>", unsafe_allow_html=True)
+    st.markdown("<span style='font-size:0.8rem;font-weight:700;color:#1e293b;'>🤖 ASK AI</span>", unsafe_allow_html=True)
     user_question = st.text_area("질문 입력", height=60, label_visibility="collapsed",
                                  value="현재 바이어스 상태가 증폭기로서 왜 적합한지 밴드 다이어그램 관점에서 설명해줘.",
                                  placeholder="e.g. 현재 전압 조건 상태에 대해 물리적으로 쉽게 설명해줘.")
