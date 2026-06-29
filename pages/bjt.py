@@ -21,7 +21,7 @@ st.markdown("""
         margin-top: 5px !important;
     }
     [data-testid="stSidebarNav"] { display: none !important; }
-    [data-testid="stSidebar"] hr { margin: 6px 0 !important; }
+     hr { margin: 6px 0 !important; }
     [data-testid="stSidebar"] .stSlider {
         margin-top: 0px !important;
         padding-bottom: 0px !important;
@@ -37,14 +37,20 @@ st.markdown("""
         margin-top: -4px !important;
         margin-bottom: -4px !important;
     }
+        /* 숫자 입력칸: 위아래 회색 없이 흰색으로 꽉 차게 */
+    [data-testid="stSidebar"] .stNumberInput,
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"],
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
     }
+    [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"] {
+        border: 1px solid #d1d5db !important;
+        min-height: 0 !important;
+    }
     [data-testid="stSidebar"] .stNumberInput input {
-        height: 26px !important;
-        padding: 1px 4px !important;
-        font-size: 0.75rem !important;
+        height: 36px !important;
+        padding: 4px 8px !important;
+        font-size: 0.78rem !important;
         color: #2c3e50 !important;
         background-color: #ffffff !important;
     }
