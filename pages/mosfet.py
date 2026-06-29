@@ -179,14 +179,14 @@ col_left, col_mid, col_right = st.columns([1, 1.4, 1])
 with col_left:
     st.markdown("<div class='section-header'>📊 소자 상태</div>", unsafe_allow_html=True)
     
-    # 1. 동작 영역별 테마 색상 동적 매핑
+    # 동작 영역별 테마 색상 동적 매핑
     region_color = (
         "#22c55e" if region == "Saturation" else  # 포화 (초록)
         "#eab308" if region == "Linear" else      # 선형 (노랑)
         "#ef4444"                                 # 차단 (빨강)
     )
     
-    # 2. 파이썬 f-string 중괄호 충돌 오류 및 렌더링 누락 문제 해결 버전
+    # 파이썬 f-string 중괄호 충돌 우회를 위해 CSS 중괄호를 겹중괄호({{ }})로 수정했습니다.
     st.markdown(f"""
     <div style="background: #ffffff; border-radius: 20px; padding: 32px;
                 border: 1px solid #f1f5f9; box-shadow: 0px 8px 24px rgba(148, 163, 184, 0.05);">
