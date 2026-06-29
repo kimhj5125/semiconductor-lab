@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ── CSS 스타일 ─────────────────────────────────────────────
-pythonst.markdown("""
+st.markdown("""
 <style>
     [data-testid="stSidebarUserContent"] {
         padding-top: 0rem !important;
