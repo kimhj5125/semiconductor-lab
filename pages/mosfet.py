@@ -179,51 +179,51 @@ col_left, col_mid, col_right = st.columns([1, 1.4, 1])
 with col_left:
     st.markdown("<div class='section-header'>📊 소자 상태</div>", unsafe_allow_html=True)
     
-    # 동작 영역별 테마 색상 설정
+    # 1. 동작 영역별 테마 색상 동적 매핑
     region_color = (
-        "#22c55e" if region == "Saturation" else  # 포화 영역 (초록)
-        "#eab308" if region == "Linear" else      # 선형 영역 (노랑)
-        "#ef4444"                                 # 차단 영역 (빨강)
+        "#22c55e" if region == "Saturation" else  # 포화 (초록)
+        "#eab308" if region == "Linear" else      # 선형 (노랑)
+        "#ef4444"                                 # 차단 (빨강)
     )
     
-    # [수정] 이미지와 완벽히 일치하는 4변수 격자형 카드 컴포넌트
+    # 2. 파이썬 f-string 중괄호 충돌 오류 및 렌더링 누락 문제 해결 버전
     st.markdown(f"""
-    <div style='background: #ffffff; border-radius: 20px; padding: 32px;
-                border: 1px solid #f1f5f9; box-shadow: 0px 8px 24px rgba(148, 163, 184, 0.05);'>
+    <div style="background: #ffffff; border-radius: 20px; padding: 32px;
+                border: 1px solid #f1f5f9; box-shadow: 0px 8px 24px rgba(148, 163, 184, 0.05);">
         
-        <div style='font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;'>
+        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;">
             OPERATING REGION
         </div>
         
-        <div style='font-size: 2.1rem; font-weight: 800; color: {region_color}; letter-spacing: -0.02em; margin-bottom: 6px;'>
+        <div style="font-size: 2.1rem; font-weight: 800; color: {region_color}; letter-spacing: -0.02em; margin-bottom: 6px;">
             {region_kr}
         </div>
         
-        <div style='font-size: 1.15rem; color: {region_color}e0; font-weight: 600; margin-bottom: 32px;'>
+        <div style="font-size: 1.15rem; color: {region_color}; opacity: 0.88; font-weight: 600; margin-bottom: 32px;">
             ({region})
         </div>
         
-        <div style='display: grid; grid-template-columns: 1fr 1fr; row-gap: 24px; column-gap: 16px;'>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; row-gap: 24px; column-gap: 16px;">
             <div>
-                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>문턱 전압 |V_TH|</div>
-                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vth:.2f} V</div>
+                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;">문턱 전압 |V_TH|</div>
+                <div style="font-size: 1.55rem; font-weight: 700; color: #1e293b;">{vth:.2f} V</div>
             </div>
             <div>
-                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>드레인전류 |I_D|</div>
-                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{id_mA:.2f} mA</div>
+                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;">드레인전류 |I_D|</div>
+                <div style="font-size: 1.55rem; font-weight: 700; color: #1e293b;">{id_mA:.2f} mA</div>
             </div>
             <div>
-                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>게이트 전압 V_GS</div>
-                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vgs:.2f} V</div>
+                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;">게이트 전압 V_GS</div>
+                <div style="font-size: 1.55rem; font-weight: 700; color: #1e293b;">{vgs:.2f} V</div>
             </div>
             <div>
-                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>인가전압 |V_DS|</div>
-                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vds:.2f} V</div>
+                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;">인가전압 |V_DS|</div>
+                <div style="font-size: 1.55rem; font-weight: 700; color: #1e293b;">{vds:.2f} V</div>
             </div>
         </div>
         
     </div>
-    <div style='margin-bottom: 24px;'></div>
+    <div style="margin-bottom: 24px;"></div>
     """, unsafe_allow_html=True)
     
     # ── MOSFET 구조 시각화 ───────────────────────────────
