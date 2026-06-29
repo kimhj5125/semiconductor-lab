@@ -16,7 +16,6 @@ st.set_page_config(
 )
 
 # ── CSS 스타일 ─────────────────────────────────────────────
-아 맞아요, 기존 CSS에 추가하는 거니까 전체 CSS 한번에 정리해드릴게요:
 pythonst.markdown("""
 <style>
     [data-testid="stSidebarUserContent"] {
