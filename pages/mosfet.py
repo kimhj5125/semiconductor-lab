@@ -118,7 +118,7 @@ with st.sidebar:
     st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
     st.markdown("**🤖 ASK AI**")
     user_question = st.text_area(
-        "", height=65,  # 한눈에 보이도록 높이 축소
+        "", height=100,  # 한눈에 보이도록 높이 축소
         placeholder="e.g. 현재 전압 조건 상태에 대해 물리적으로 쉽게 설명해줘.",
         label_visibility="collapsed"
     )
