@@ -1,5 +1,10 @@
 import streamlit as st
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.patches import Polygon as MplPolygon
 import plotly.graph_objects as go
 import google.generativeai as genai
 
@@ -61,7 +66,7 @@ with st.sidebar:
     st.markdown("---")
     mos_type = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
     
-    # 순서 최적화: 문턱 전압 -> 게이트 전압 -> 드레인 전압
+    # 입력 순서 최적화: 문턱 전압 -> 게이트 전압 -> 드레인 전압
     if mos_type == "NMOS":
         v_th = st.slider("문턱 전압 (V_TH) [V]", 0.5, 2.0, 1.0, 0.1)
         v_gs = st.slider("게이트 전압 (V_GS) [V]", 0.0, 5.0, 3.0, 0.1)
@@ -77,15 +82,16 @@ with st.sidebar:
     ask_ai_btn = st.button("AI 실시간 해설 받기", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------
-# 3. 물리 계산 로직 (오류 교정 및 수식 동기화)
+# 3. 물리 계산 로직 (수식 교정 및 Plotly 동기화)
 # ---------------------------------------------------------
 k_n = 1.0
-lambda_mod = 0.02  # 채널 길이 변조 효과 반영
+lambda_mod = 0.02  # 채널 길이 변조 계수 반영
 
 abs_vgs = abs(v_gs)
 abs_vds = abs(v_ds)
 abs_vth = abs(v_th)
 v_ov = abs_vgs - abs_vth
+vds_sat = max(v_ov, 0.0)
 
 if abs_vgs < abs_vth:
     op_region, i_d = "차단 영역 (Cutoff)", 0.0
@@ -94,12 +100,15 @@ elif abs_vds < v_ov:
 else:
     op_region, i_d = "포화 영역 (Saturation)", 0.5 * k_n * (v_ov ** 2) * (1 + lambda_mod * (abs_vds - v_ov))
 
+# UI 매핑용 한글명 키벨류
+region_kr = "포화 영역 (Saturation)" if "포화" in op_region else "선형 영역 (Linear)" if "선형" in op_region else "차단 영역 (Cutoff)"
+
 # ---------------------------------------------------------
-# 4. 메인 대시보드 (3단 구성)
+# 4. 메인 대시보드 (3단 레이아웃 구성)
 # ---------------------------------------------------------
 col1, col2, col3 = st.columns([1, 1.2, 1.2], gap="medium")
 
-# --- [Column 1] 소자 상태 및 에너지 밴드 구조 시각화 ---
+# --- [Column 1] 실시간 소자 상태 및 원본 MOSFET 구조 시각화 (유지) ---
 with col1:
     st.markdown("<div class='header-text'>📊 실시간 소자 상태</div>", unsafe_allow_html=True)
     
@@ -107,133 +116,77 @@ with col1:
     st.markdown(f"""
     <div style='background-color:{box_color}; padding:10px; border-radius:8px; border:1px solid #ddd; text-align:center;'>
         <div style='font-size:12px; color:#475569; margin-bottom:2px;'>현재 동작 영역</div>
-        <span style='font-size:18px; font-weight:700; color:#1e293b;'>{op_region}</span>
+        <span style='font-size:18px; font-weight:700; color:#1e293b;'>{region_kr}</span>
     </div>
     """, unsafe_allow_html=True)
     
     m1, m2 = st.columns(2)
-    m1.metric("인가 전압 (|V_DS|)", f"{abs_vds:.2f} V")
+    m1.metric("V_DS,sat" if mos_type == "NMOS" else "|V_DS,sat|", f"{vds_sat:.2f} V")
     m2.metric("드레인 전류 (|I_D|)", f"{i_d:.3f} mA")
     
     st.markdown("<div class='header-text'>🧱 MOSFET 구조 시각화</div>", unsafe_allow_html=True)
     
-    fig_struct = go.Figure()
-    
-    if mos_type == "NMOS":
-        sub_color, sd_color, ch_color = "#e0f2fe", "#4ade80", "#fc8181" 
-        sub_text, sd_label = "p-Substrate", "n+"
-        pinch_color = "#b91c1c"
-        ch_border_color = "#991b1b" 
+    # 원본 Matplotlib 구조 시각화 로직 100% 보존
+    fig_struct, ax = plt.subplots(figsize=(5, 4.5))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 8.5); ax.axis("off")
+    fig_struct.patch.set_facecolor('white')
+
+    sub_color  = "#c8dff0" if mos_type == "NMOS" else "#fce4d6"
+    sub_edge   = "#5a8abf" if mos_type == "NMOS" else "#e67e22"
+    sub_text   = "p-Substrate" if mos_type == "NMOS" else "n-Substrate"
+    sub_tc     = "#2c5f8a" if mos_type == "NMOS" else "#a04000"
+    well_text  = "n+" if mos_type == "NMOS" else "p+"
+    well_color = "#4caf7d" if mos_type == "NMOS" else "#9b59b6"
+    well_edge  = "#2e7d52" if mos_type == "NMOS" else "#8e44ad"
+    carrier_color = "#e65100" if mos_type == "NMOS" else "#8e44ad"
+    ch_color   = "#66bb6a" if mos_type == "NMOS" else "#d2b4de"
+    ch_edge    = "#388e3c" if mos_type == "NMOS" else "#af7ac5"
+
+    sub = patches.FancyBboxPatch((0.3, 0.3), 9.4, 4.8, boxstyle="round,pad=0.1", fc=sub_color, ec=sub_edge, lw=1.5)
+    ax.add_patch(sub)
+    ax.text(5, 1.0, sub_text, ha="center", va="center", fontsize=10, color=sub_tc, fontstyle='italic')
+
+    src = patches.FancyBboxPatch((0.5, 3.0), 2.3, 2.1, boxstyle="round,pad=0.05", fc=well_color, ec=well_edge, lw=1.5)
+    ax.add_patch(src)
+    ax.text(1.65, 4.1, "S", ha="center", va="center", fontsize=18, fontweight="bold", color="white")
+    ax.text(1.65, 3.35, well_text, ha="center", va="center", fontsize=10, color="#ffffff")
+
+    drn = patches.FancyBboxPatch((7.2, 3.0), 2.3, 2.1, boxstyle="round,pad=0.05", fc=well_color, ec=well_edge, lw=1.5)
+    ax.add_patch(drn)
+    ax.text(8.35, 4.1, "D", ha="center", va="center", fontsize=18, fontweight="bold", color="white")
+    ax.text(8.35, 3.35, well_text, ha="center", va="center", fontsize=10, color="#ffffff")
+
+    sio2 = patches.Rectangle((2.8, 5.1), 4.4, 0.4, fc="#e8e8e8", ec="#aaa", lw=1.0)
+    ax.add_patch(sio2)
+    ax.text(7.35, 5.3, "SiO2", ha="left", va="center", fontsize=8, color="#9400D3")
+
+    gate = patches.FancyBboxPatch((2.8, 5.5), 4.4, 0.75, boxstyle="round,pad=0.05", fc="#37474f", ec="#1a1a2e", lw=1.5)
+    ax.add_patch(gate)
+    ax.text(5, 5.88, "Gate (G)", ha="center", va="center", fontsize=10, fontweight="bold", color="white")
+
+    GATE_X_START, GATE_X_END = 2.8, 7.2
+    GATE_LEN = GATE_X_END - GATE_X_START
+    SIO2_BOTTOM, CH_THICK = 5.1, 0.5
+
+    if "포화" in op_region:
+        ratio = float(np.clip(vds_sat / max(abs_vds, 0.01), 0.15, 0.85))
+        po_x = GATE_X_START + GATE_LEN * ratio if mos_type == "NMOS" else GATE_X_END - GATE_LEN * ratio
+        if mos_type == "NMOS":
+            tri_pts = np.array([[GATE_X_START, SIO2_BOTTOM], [po_x, SIO2_BOTTOM], [GATE_X_START, SIO2_BOTTOM - CH_THICK]])
+            dep_rect = patches.Rectangle((po_x, SIO2_BOTTOM - CH_THICK), GATE_X_END - po_x, CH_THICK, fc="#dce8f5", ec="#5a8abf", linestyle='--', alpha=0.6)
+            arr_start, arr_end = GATE_X_START + 0.2, po_x - 0.15
+        else:
+            tri_pts = np.array([[GATE_X_END, SIO2_BOTTOM], [po_x, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM - CH_THICK]])
+            dep_rect = patches.Rectangle((GATE_X_START, SIO2_BOTTOM - CH_THICK), po_x - GATE_X_START, fc="#fbeee6", ec="#e67e22", linestyle='--', alpha=0.6)
+            arr_start, arr_end = GATE_X_END - 0.2, po_x + 0.15
+        ax.add_patch(MplPolygon(tri_pts, closed=True, fc=ch_color, ec=ch_edge, lw=1.2, alpha=0.9, zorder=4))
+        ax.add_patch(dep_rect)
+        ax.plot(po_x, SIO2_BOTTOM, 'ro', ms=7, zorder=10)
+        ax.text(po_x, SIO2_BOTTOM - 0.8, "Pinch-off", ha="center", fontsize=7, color="red", fontweight="bold")
+        ax.annotate("", xy=(arr_end, SIO2_BOTTOM - CH_THICK * 0.4), xytext=(arr_start, SIO2_BOTTOM - CH_THICK * 0.4), arrowprops=dict(arrowstyle='->', color=carrier_color, lw=1.4), zorder=6)
+    elif "선형" in op_region:
+        drain_thin = CH_THICK * (1.0 - 0.4 * (abs_vds / (vds_sat if vds_sat > 0 else 1)))
+        trap_pts = np.array([[GATE_X_START, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM - drain_thin], [GATE_X_START, SIO2_BOTTOM - CH_THICK]])
+        ax.add_patch(MplPolygon(trap_pts, closed=True, fc=ch_color, ec=ch_edge, lw=1.2, alpha=0.85, zorder=4))
     else:
-        sub_color, sd_color, ch_color = "#ffe4e6", "#60a5fa", "#a855f7" 
-        sub_text, sd_label = "n-Substrate", "p+"
-        pinch_color = "#1d4ed8"
-        ch_border_color = "#6b21a8" 
-
-    # 반도체 내부 구조(기판, 게이트, 소스, 드레인) 그리기
-    fig_struct.add_shape(type="rect", x0=0, y0=0, x1=10, y1=4, fillcolor=sub_color, line=dict(width=0))
-    fig_struct.add_shape(type="rect", x0=3, y0=4, x1=7, y1=4.15, fillcolor="#cbd5e1", line=dict(width=0))
-    fig_struct.add_shape(type="rect", x0=3, y0=4.15, x1=7, y1=5.0, fillcolor="#1e293b", line=dict(width=0))
-    
-    fig_struct.add_shape(type="rect", x0=1, y0=2.5, x1=3, y1=4, fillcolor=sd_color, line=dict(width=0))
-    fig_struct.add_shape(type="rect", x0=7, y0=2.5, x1=9, y1=4, fillcolor=sd_color, line=dict(width=0))
-    
-    fig_struct.add_shape(type="line", x0=0.5, y0=2.0, x1=9.5, y1=2.0, line=dict(color="#94a3b8", width=1.5, dash="dot"))
-    fig_struct.add_annotation(x=5, y=1.6, text="<i>Depletion Region</i>", font=dict(color="#64748b", size=11), showarrow=False)
-
-    # 채널 역학 및 핀치오프(Pinch-off) 현상 다이어그램 매핑
-    if op_region != "차단 영역 (Cutoff)":
-        if op_region == "선형 영역 (Linear)":
-            t_d = 4.0 - 0.2 * (1 - abs_vds / max(v_ov, 0.001))
-            fig_struct.add_shape(type="path", path=f"M 3 4 L 7 4 L 7 {t_d} L 3 3.85 Z", fillcolor=ch_color, line=dict(color=ch_border_color, width=2), opacity=0.85)
-        else:
-            p_p = max(4.0, 7 - (abs_vds - v_ov) * 0.8)
-            fig_struct.add_shape(type="path", path=f"M 3 4 L {p_p} 4 L 3 3.85 Z", fillcolor=ch_color, line=dict(color=ch_border_color, width=2), opacity=0.85)
-            fig_struct.add_shape(type="line", x0=p_p, y0=0, x1=p_p, y1=5.5, line=dict(color=pinch_color, width=2, dash="dash"))
-            fig_struct.add_annotation(x=p_p, y=5.7, text="Pinch-off", font=dict(color=pinch_color, size=10), showarrow=False)
-
-    fig_struct.add_annotation(x=2, y=3.5, text="<b>S</b>", font=dict(color="white", size=20), showarrow=False)
-    fig_struct.add_annotation(x=2, y=3.0, text=f"<i>{sd_label}</i>", font=dict(color="white", size=14), showarrow=False)
-    fig_struct.add_annotation(x=8, y=3.5, text="<b>D</b>", font=dict(color="white", size=20), showarrow=False)
-    fig_struct.add_annotation(x=8, y=3.0, text=f"<i>{sd_label}</i>", font=dict(color="white", size=14), showarrow=False)
-    fig_struct.add_annotation(x=5, y=4.55, text="Gate (G)", font=dict(color="white", size=12), showarrow=False)
-    fig_struct.add_annotation(x=5, y=0.5, text=sub_text, font=dict(color="#475569", size=13), showarrow=False)
-
-    fig_struct.update_layout(height=230, margin=dict(l=0, r=0, t=10, b=0), xaxis=dict(visible=False, range=[0, 10]), yaxis=dict(visible=False, range=[0, 6]), plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig_struct, use_container_width=True, theme="streamlit")
-
-# --- [Column 2] I-V 특성 곡선 ---
-with col2:
-    st.markdown("<div class='header-text'>📈 전류-전압 특성 곡선</div>", unsafe_allow_html=True)
-    
-    v_ax = np.linspace(0, 5, 200)
-    v_b = np.linspace(0, 5, 200)
-    i_b = 0.5 * k_n * (v_b**2)
-
-    fig_iv = go.Figure()
-    fig_iv.add_trace(go.Scatter(x=v_b, y=i_b, mode='lines', line=dict(color='#cbd5e1', dash='dash', width=1.5), name="포화 영역 경계선"))
-    
-    i_ax = []
-    for v in v_ax:
-        if abs_vgs < abs_vth:
-            i_ax.append(0.0)
-        elif v < v_ov:
-            i_ax.append(k_n * (v_ov * v - 0.5 * (v ** 2)))
-        else:
-            i_ax.append(0.5 * k_n * (v_ov ** 2) * (1 + lambda_mod * (v - v_ov)))
-
-    fig_iv.add_trace(go.Scatter(x=v_ax, y=i_ax, mode='lines', line=dict(color='#3b82f6', width=3), name="I-V 특성 곡선"))
-    fig_iv.add_trace(go.Scatter(x=[abs_vds], y=[i_d], mode='markers', marker=dict(color='#ef4444', size=12, line=dict(color='white', width=1.5)), name="현재 동작점"))
-    
-    fig_iv.update_layout(
-        height=350, 
-        margin=dict(l=0, r=0, t=10, b=0), 
-        xaxis_title="V_DS (V)", 
-        yaxis_title="I_D (mA)", 
-        showlegend=True, 
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(128, 128, 128, 0.1)", bordercolor="rgba(128,128,128,0.2)", borderwidth=1),
-        plot_bgcolor='rgba(0,0,0,0)'
-    )
-    fig_iv.update_xaxes(showgrid=True, gridcolor='rgba(128, 128, 128, 0.2)', range=[0, 5])
-    fig_iv.update_yaxes(showgrid=True, gridcolor='rgba(128, 128, 128, 0.2)', range=[0, max(max(i_ax)*1.1, 2.0)])
-    st.plotly_chart(fig_iv, use_container_width=True, theme="streamlit")
-
-# --- [Column 3] AI 실시간 해설 (크기 조절 창 기능 온전히 유지) ---
-with col3:
-    with st.container(border=True):
-        st.markdown("<div class='header-text' style='text-align: center; color: #3b82f6;'>🤖 AI 실시간 해설</div>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-        
-        if ask_ai_btn:
-            if not api_key:
-                st.error("⚠️ 좌측 사이드바에 API Key를 입력해주세요.")
-            else:
-                with st.spinner("반도체 물성 분석 중..."):
-                    try:
-                        genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-2.5-flash')
-                        
-                        prompt = f"""
-                        너는 학부 및 대학원 수준의 반도체 공학 전문가야. 아래 정보를 바탕으로 현재 MOSFET의 상태를 물리적으로 깊이 있게 분석해줘.
-                        
-                        [상태 정보]
-                        - 소자: {mos_type}
-                        - V_GS={v_gs}V, V_DS={v_ds}V, V_TH={v_th}V
-                        - 동작 영역: {op_region}
-                        - I_D={i_d:.3f}mA
-                        
-                        [사용자 질문]
-                        {user_query}
-                        
-                        [답변 지침]
-                        1. 불필요한 서론(인사말 등)이나 맺음말은 완전히 생략하되, 답변 전체를 반드시 **전문적이고 친절한 존댓말(해요체/하십시오체)**로 작성할 것. 반말 사용 금지.
-                        2. 표면적인 설명(예: 전압이 커서 전류가 흐른다)을 넘어, 페르미 준위(Fermi level), 에너지 밴드 벤딩(Energy band bending), 반전층(Inversion layer) 내 캐리어 농도, 공핍층(Depletion region) 역학, 전계(Electric field) 등 심도 있는 물성 지식을 포함할 것.
-                        3. 마크다운 불릿을 활용하여 가독성 높게 구조화할 것.
-                        """
-                        
-                        response = model.generate_content(prompt)
-                        st.markdown(response.text)
-                    except Exception as e:
-                        st.error(f"⚠️ AI 응답 생성 중 오류가 발생했습니다.\n\n상세 정보: {e}")
-        else:
-            st.info("👈 왼쪽 패널에서 설정을 마치고 [AI 실시간 해설 받기] 버튼을 눌러보세요.")
+        ax.text(5, S
