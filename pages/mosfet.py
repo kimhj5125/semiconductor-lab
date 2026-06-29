@@ -56,10 +56,11 @@ for key, default in [("vth_val", 1.0), ("vgs_val", 2.6), ("vds_val", 3.7)]:
 # ── 사이드바 ─────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🎛️ 제어 및 입력 패널")
+    st.divider()
 
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
     st.divider()
-    
+
     st.markdown("**문턱 전압 |V_TH| (V)**")
     vth = st.slider("V_TH", 0.0, 2.0,
                     value=float(st.session_state["vth_val"]),
@@ -81,6 +82,7 @@ with st.sidebar:
                     label_visibility="collapsed")
     st.session_state["vds_val"] = vds
 
+    st.divider()
     st.markdown("**🤖 ASK AI**")
     user_question = st.text_area(
         "", height=100,
@@ -153,13 +155,13 @@ with col_left:
         st.markdown(f"""
         <div style='padding:8px 0'>
             <div style='font-size:11px;color:#666;margin-bottom:2px'>인가전압 |V_DS|</div>
-            <div style='font-size:20px;font-weight:700;color:#1a1a2e'>{vds:.2f} V</div>
+            <div style='font-size:28px;font-weight:700;color:#1a1a2e'>{vds:.2f} V</div>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
         <div style='padding:8px 0'>
             <div style='font-size:11px;color:#666;margin-bottom:2px'>드레인전류 |I_D|</div>
-            <div style='font-size:20px;font-weight:700;color:#1a1a2e'>{id_mA:.2f} mA</div>
+            <div style='font-size:28px;font-weight:700;color:#1a1a2e'>{id_mA:.2f} mA</div>
         </div>""", unsafe_allow_html=True)
     st.divider()
 
@@ -312,94 +314,118 @@ with col_mid:
     fig_iv.update_yaxes(showgrid=True, gridcolor='rgba(128,128,128,0.2)')
     st.plotly_chart(fig_iv, use_container_width=True, theme="streamlit")
 
-    # ── 에너지 밴드 다이어그램 ───────────────────────────
-    st.markdown(f"**Energy Band Diagram ({device})**")
-    fig_band, ax_b = plt.subplots(figsize=(5.5, 2.8))
 
-    # x 구간: Source | SiO2 | Channel | Drain
-    x_src = np.linspace(0.0, 0.8, 50)
-    x_ox  = np.linspace(0.8, 1.2, 20)
-    x_ch  = np.linspace(1.2, 2.8, 80)
-    x_drn = np.linspace(2.8, 3.6, 50)
-
+    # ── 에너지 밴드 다이어그램 (plotly, Source-Channel-Drain 3구간) ──
     Eg   = 1.12
-    E0   = 2.0    # Source Ec 기준
+    E0   = 2.0
 
     abs_vgs = abs(vgs)
     abs_vds = abs(vds)
     abs_vth = abs(vth)
     vgs_eff_plot = max(abs_vgs - abs_vth, 0.0)
 
-    # NMOS: 채널 Ec 아래로 벤딩 / PMOS: 위로
     bend_sign = -1.0 if device == "NMOS" else +1.0
     bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55
-    # Drain: VDS만큼 에너지 낮아짐
     drop_d    = -min(abs_vds, 3.0) * 0.4
 
-    # ── Ec 계산 (SiO2 배리어 없이 연속 선형 연결) ───────
+    x_src = np.linspace(0.0, 1.0, 50)
+    x_ch  = np.linspace(1.0, 2.0, 80)
+    x_drn = np.linspace(2.0, 3.0, 50)
+
     ec_src = np.full_like(x_src, E0)
+    ec_ch  = np.linspace(E0, E0 + bend_ch, len(x_ch))
+    ec_drn = np.linspace(E0 + bend_ch, E0 + bend_ch + drop_d, len(x_drn))
 
-    ec_ch_start = E0 + bend_ch * 0.5
-    ec_ox       = np.linspace(E0, ec_ch_start, len(x_ox))
-
-    ec_ch_end = E0 + bend_ch
-    ec_ch     = np.linspace(ec_ch_start, ec_ch_end, len(x_ch))
-
-    ec_drn = np.linspace(ec_ch_end, ec_ch_end + drop_d, len(x_drn))
-
-    # ── Ev = Ec - Eg ─────────────────────────────────────
     ev_src = ec_src - Eg
-    ev_ox  = ec_ox  - Eg
     ev_ch  = ec_ch  - Eg
     ev_drn = ec_drn - Eg
 
-    x_all  = np.concatenate([x_src, x_ox,  x_ch,  x_drn])
-    ec_all = np.concatenate([ec_src, ec_ox, ec_ch, ec_drn])
-    ev_all = np.concatenate([ev_src, ev_ox, ev_ch, ev_drn])
+    x_all  = np.concatenate([x_src, x_ch,  x_drn])
+    ec_all = np.concatenate([ec_src, ec_ch, ec_drn])
+    ev_all = np.concatenate([ev_src, ev_ch, ev_drn])
 
-    # ── 플롯 ─────────────────────────────────────────────
-    ax_b.plot(x_all, ec_all, color='#e74c3c', lw=2.0, label="$E_c$")
-    ax_b.plot(x_all, ev_all, color='#2980b9', lw=2.0, label="$E_v$")
+    ef_src_val = E0 - Eg / 2 + 0.1
+    ef_drn_val = ef_src_val + drop_d
 
-    # SiO2 배경 음영만 (텍스트 없음)
-    ax_b.axvspan(0.8, 1.2, color='#e0e0e0', alpha=0.4, zorder=0)
+    fig_band = go.Figure()
 
-    # ── Fermi level ───────────────────────────────────────
-    ef_src = E0 - Eg / 2 + 0.1
-    ef_drn = ef_src + drop_d
+    fig_band.add_trace(go.Scatter(
+        x=list(x_all), y=list(ec_all), mode='lines',
+        line=dict(color='#e74c3c', width=2.5),
+        name="E<sub>c</sub>"
+    ))
+    fig_band.add_trace(go.Scatter(
+        x=list(x_all), y=list(ev_all), mode='lines',
+        line=dict(color='#2980b9', width=2.5),
+        name="E<sub>v</sub>"
+    ))
+    fig_band.add_trace(go.Scatter(
+        x=[0.0, 1.0], y=[ef_src_val, ef_src_val], mode='lines',
+        line=dict(color='purple', width=1.5, dash='dot'),
+        name="E<sub>F</sub>"
+    ))
+    fig_band.add_trace(go.Scatter(
+        x=[2.0, 3.0], y=[ef_drn_val, ef_drn_val], mode='lines',
+        line=dict(color='purple', width=1.5, dash='dot'),
+        showlegend=False
+    ))
 
-    ax_b.hlines(ef_src, 0.0, 0.8, colors='purple', lw=1.2,
-                linestyles=':', alpha=0.85, label="$E_F$")
-    ax_b.hlines(ef_drn, 2.8, 3.6, colors='purple', lw=1.2,
-                linestyles=':', alpha=0.85)
+    # Eg 양방향 화살표
+    fig_band.add_annotation(
+        x=0.15, y=ec_src[0], ay=ev_src[0],
+        axref='x', ayref='y', xref='x', yref='y',
+        arrowhead=2, arrowsize=1, arrowwidth=1.2,
+        arrowcolor='gray', ax=0.15
+    )
+    fig_band.add_annotation(
+        x=0.15, y=ev_src[0], ay=ec_src[0],
+        axref='x', ayref='y', xref='x', yref='y',
+        arrowhead=2, arrowsize=1, arrowwidth=1.2,
+        arrowcolor='gray', ax=0.15
+    )
+    fig_band.add_annotation(
+        x=0.2, y=(ec_src[0] + ev_src[0]) / 2,
+        text=f"Eg={Eg}eV", showarrow=False,
+        font=dict(size=9, color='gray'), xanchor='left'
+    )
 
-    # ── Eg 양방향 화살표 ─────────────────────────────────
-    ax_b.annotate("", xy=(0.3, ec_src[0]), xytext=(0.3, ev_src[0]),
-                  arrowprops=dict(arrowstyle='<->', color='gray', lw=1.0))
-    ax_b.text(0.35, (ec_src[0] + ev_src[0]) / 2,
-              f"Eg={Eg}eV", fontsize=6, color='gray', va='center')
-
-    # ── 동작 영역 레이블 ──────────────────────────────────
+    # 동작 영역 레이블
     if region == "Saturation" and vgs_eff_plot > 0:
-        ax_b.text(2.0, E0 + bend_ch - 0.2, "Inversion Layer\n(Saturation)",
-                  ha='center', fontsize=6.5, color='#27ae60',
-                  bbox=dict(boxstyle='round,pad=0.2', fc='#eafaf1',
-                            ec='#27ae60', alpha=0.85))
+        fig_band.add_annotation(
+            x=1.5, y=E0 + bend_ch - 0.15,
+            text="Inversion Layer<br>(Saturation)",
+            showarrow=False, font=dict(size=9, color='#27ae60'),
+            bgcolor='#eafaf1', bordercolor='#27ae60', borderwidth=1
+        )
     elif region == "Linear" and vgs_eff_plot > 0:
-        ax_b.text(2.0, E0 + bend_ch - 0.2, "Channel Formed\n(Linear)",
-                  ha='center', fontsize=6.5, color='#f39c12',
-                  bbox=dict(boxstyle='round,pad=0.2', fc='#fef9e7',
-                            ec='#f39c12', alpha=0.85))
+        fig_band.add_annotation(
+            x=1.5, y=E0 + bend_ch - 0.15,
+            text="Channel Formed<br>(Linear)",
+            showarrow=False, font=dict(size=9, color='#f39c12'),
+            bgcolor='#fef9e7', bordercolor='#f39c12', borderwidth=1
+        )
 
-    ax_b.set_xticks([0.4, 1.0, 2.0, 3.2])
-    ax_b.set_xticklabels(["Source", "SiO₂", "Channel", "Drain"], fontsize=7.5)
-    ax_b.set_ylabel("Energy (eV)", fontsize=8)
-    ax_b.set_title("Energy Band Diagram", fontsize=9, pad=4)
-    ax_b.legend(fontsize=7, loc='lower right', framealpha=0.9)
-    ax_b.grid(True, alpha=0.2, linestyle=':')
-    fig_band.tight_layout()
-    st.pyplot(fig_band)
-    plt.close(fig_band)
+    fig_band.update_layout(
+        height=270, margin=dict(l=0, r=0, t=30, b=0),
+        xaxis=dict(
+            tickvals=[0.5, 1.5, 2.5],
+            ticktext=["Source", "Channel", "Drain"],
+            tickfont=dict(size=10),
+            showgrid=True, gridcolor='rgba(128,128,128,0.2)'
+        ),
+        yaxis=dict(
+            title="Energy (eV)", title_font=dict(size=10),
+            showgrid=True, gridcolor='rgba(128,128,128,0.2)'
+        ),
+        legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99,
+                    bgcolor="rgba(255,255,255,0.85)",
+                    bordercolor="rgba(128,128,128,0.3)", borderwidth=1,
+                    font=dict(size=9)),
+        plot_bgcolor='rgba(0,0,0,0)',
+        title=dict(text=f"Energy Band Diagram ({device})",
+                   font=dict(size=11), x=0.5, xanchor='center')
+    )
+    st.plotly_chart(fig_band, use_container_width=True, theme="streamlit")
 
 
 # ════════════════════════════════════════════════════════════
