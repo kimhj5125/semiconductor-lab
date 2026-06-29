@@ -128,6 +128,6 @@ with col2:
     """, unsafe_allow_html=True)
     st.page_link("pages/bjt.py", label="🔬 BJT 시뮬레이터 시작", use_container_width=True)
 
-st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+
 st.markdown("<div class='footer'>Semiconductor Device Simulator · Powered by Streamlit & Gemini AI</div>",
             unsafe_allow_html=True)
