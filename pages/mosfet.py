@@ -54,7 +54,24 @@ for key, default in [("vth_val", 1.0), ("vgs_val", 2.6), ("vds_val", 3.7)]:
         st.session_state[key] = default
 
 # ── 사이드바 ─────────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* 사이드바 최상단에 생기는 기본 페이지 이동 메뉴를 강제로 숨깁니다 */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 with st.sidebar:
+    # 🏠 최상단에 홈으로 돌아가기 버튼 추가
+    if st.button("⬅ 홈으로 돌아가기", use_container_width=True):
+        st.switch_page("app.py")  # 메인 파일명이 app.py가 아니라면 해당 파일명으로 바꿔주세요!
+        
+    # 버튼과 패널 제목 사이 선 없이 여백 주기 (15픽셀)
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+
+    # 🎛️ 제어 및 입력 패널 시작
     st.markdown("## 🎛️ 제어 및 입력 패널")
 
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
