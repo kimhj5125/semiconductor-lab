@@ -21,7 +21,7 @@ st.markdown("""
         margin-top: 5px !important;
     }
     [data-testid="stSidebarNav"] { display: none !important; }
-    [data-testid="stSidebar"] hr { margin: 6px 0 !important; }
+     hr { margin: 6px 0 !important; }
     [data-testid="stSidebar"] .stSlider {
         margin-top: 0px !important;
         padding-bottom: 0px !important;
@@ -37,14 +37,27 @@ st.markdown("""
         margin-top: -4px !important;
         margin-bottom: -4px !important;
     }
+    /* 숫자 입력칸 + -/+ 버튼 = 하나의 둥근 흰색 박스 */
+    [data-testid="stSidebar"] .stNumberInput {
+        background-color: #ffffff !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
+    }
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"],
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+    }
+    [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"]:focus-within {
+        border: none !important;
+        box-shadow: none !important;
     }
     [data-testid="stSidebar"] .stNumberInput input {
-        height: 26px !important;
-        padding: 1px 4px !important;
-        font-size: 0.75rem !important;
+        height: 36px !important;
+        padding: 4px 8px !important;
+        font-size: 0.78rem !important;
         color: #2c3e50 !important;
         background-color: #ffffff !important;
     }
@@ -118,7 +131,7 @@ with st.sidebar:
     user_question = st.text_area("질문 입력", height=60, label_visibility="collapsed",
                                  value="현재 바이어스 상태가 증폭기로서 왜 적합한지 밴드 다이어그램 관점에서 설명해줘.",
                                  placeholder="e.g. 현재 전압 조건 상태에 대해 물리적으로 쉽게 설명해줘.")
-    ai_btn = st.button("⊙ AI 실시간 해설 보기", use_container_width=True, type="primary")
+    ai_btn = st.button("🤖 AI 실시간 해설 보기", use_container_width=True, type="primary")
     
 # ── 물리량 계산
 V_CC    = 5.0; R_C = 800.0; beta = 150; V_AF = 100.0
@@ -256,7 +269,7 @@ bjt_svg = make_bjt_svg(bjt_type, V_be, V_bc)
 
 st.markdown(f"""
 <h1 style='text-align:left; font-size:2.2rem; font-weight:900; color:#1e293b; margin-top:0; padding-bottom:12px; border-bottom:1px solid #e2e8f0; margin-bottom: 24px;'>
-    🔌 {bjt_type} BJT SIMULATOR
+    🔬 {bjt_type} BJT SIMULATOR
 </h1>
 """, unsafe_allow_html=True)
 
@@ -537,7 +550,7 @@ with col2:
 
 # ── 3열: AI 해설
 with col3:
-    st.markdown("<div class='section-header'>⊙ AI 해설</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>🤖 AI 해설</div>", unsafe_allow_html=True)
     if ai_btn:
         system_instruction = f"""
 당신은 반도체 소자 물리학 및 증폭 회로 설계 전문가입니다.
