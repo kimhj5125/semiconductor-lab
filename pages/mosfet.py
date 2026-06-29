@@ -384,8 +384,12 @@ with col_mid:
     ec_all = np.concatenate([ec_src, ec_ch, ec_drn])
     ev_all = np.concatenate([ev_src, ev_ch, ev_drn])
 
-    ef_src_val = E0 - 0.15            # ★수정: n+ 소스/드레인은 페르미 준위가 전도대(E_c) 근처
-    ef_drn_val = ef_src_val + drop_d
+    # ★수정: 페르미 준위를 소자 종류에 맞는 밴드 쪽에 배치
+    #   - NMOS: 소스/드레인 = n+ → E_f 는 전도대(E_c) 근처
+    #   - PMOS: 소스/드레인 = p+ → E_f 는 가전자대(E_v) 근처
+    ef_offset  = -0.15 if device == "NMOS" else -(Eg - 0.15)
+    ef_src_val = E0 + ef_offset
+    ef_drn_val = (E0 + bend_ch + drop_d) + ef_offset
 
     fig_band = go.Figure()
 
