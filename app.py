@@ -109,7 +109,6 @@ with col1:
             에너지 밴드 다이어그램, 채널 구조를<br>
             실시간으로 시각화합니다.
         </div>
-        <span class='badge badge-ready'>✅ 사용 가능</span>
     </div>
     """, unsafe_allow_html=True)
     st.page_link("pages/mosfet.py", label="  🔌 MOSFET 시뮬레이터 시작", use_container_width=True)
@@ -124,7 +123,6 @@ with col2:
             동작 영역 분석과 전류 이득 특성을<br>
             시각화합니다.
         </div>
-        <span class='badge badge-soon'>🚧 준비 중</span>
     </div>
     """, unsafe_allow_html=True)
     st.page_link("pages/bjt.py", label="  🔬 BJT 시뮬레이터 시작", use_container_width=True)
