@@ -67,8 +67,9 @@ st.markdown("""
         border-radius: 12px !important;
         background-color: #1a1a2e !important;
         color: white !important;
-        display: block;
-        text-align: center;
+        display: flex !important;
+        justify-content: center !important;
+        text-align: center !important;
     }
     [data-testid="stPageLink"] a p {
         color: white !important;
@@ -111,7 +112,7 @@ with col1:
         </div>
     </div>
     """, unsafe_allow_html=True)
-    st.page_link("pages/mosfet.py", label="  🔌 MOSFET 시뮬레이터 시작", use_container_width=True)
+    st.page_link("pages/mosfet.py", label="🔌 MOSFET 시뮬레이터 시작", use_container_width=True)
 
 with col2:
     st.markdown("""
@@ -125,7 +126,7 @@ with col2:
         </div>
     </div>
     """, unsafe_allow_html=True)
-    st.page_link("pages/bjt.py", label="  🔬 BJT 시뮬레이터 시작", use_container_width=True)
+    st.page_link("pages/bjt.py", label="🔬 BJT 시뮬레이터 시작", use_container_width=True)
 
 st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 st.markdown("<div class='footer'>Semiconductor Device Simulator · Powered by Streamlit & Gemini AI</div>",
