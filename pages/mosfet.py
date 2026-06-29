@@ -21,49 +21,27 @@ st.markdown("""
     [data-testid="stSidebarUserContent"] {
         padding-top: 0rem !important;
     }
-    
-    .main { background-color: #f8f9fa; }
-    .stApp { font-family: 'Noto Sans KR', sans-serif; }
-    [data-testid="stSidebar"] { background-color: #1a1a2e; }
-    [data-testid="stSidebar"] * { color: white !important; }
-    [data-testid="stSidebar"] .stSelectbox > div > div {
-        background-color: #2a2a4e !important;
-        border-color: #555 !important;
-        color: white !important;
-    }     
     [data-testid="stSidebarNav"] { display: none !important; }
 
-    [data-testid="stSidebar"] div.stButton > button {
-        background-color: #2a2a4e !important;
-        color: white !important;
-        border: 1px solid #555 !important;
-        border-radius: 8px !important;
-        font-size: 13px !important;
-        padding: 4px 12px !important;      
-        min-height: 32px !important;
-
-        transition: background-color 0.2s ease;
-    }
-    [data-testid="stSidebar"] div.stButton > button:hover {
-        background-color: #3b3b6d !important;
-        border-color: #777 !important;
-    }
-
+    [data-testid="stSidebar"] .element-container,
     [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {
-        font-size: 14px !important;
-        margin-top: 10px !important;
         margin-bottom: 0px !important;
+        margin-top: 0px !important;
     }
+    [data-testid="stSidebar"] h3 {
+        font-size: 0.95rem !important;
+        margin-bottom: 5px !important;
+        margin-top: 5px !important;
+    }
+    [data-testid="stSidebar"] hr { margin: 6px 0 !important; }
     [data-testid="stSidebar"] .stSlider {
         margin-top: 0px !important;
         padding-bottom: 0px !important;
         margin-bottom: -10px !important;
     }
-    /* 현재값 숫자 위로 올리기 */
     [data-testid="stSidebar"] [data-testid="stSliderThumbValue"] {
         top: -30px !important;
     }
-    /* min/max 눈금을 트랙 바로 아래 붙이기 */
     [data-testid="stSidebar"] [data-testid="stSliderTickBar"] {
         margin-top: -20px !important;
     }
@@ -77,6 +55,13 @@ st.markdown("""
     }
     [data-testid="stSidebar"] .stTextArea textarea {
         font-size: 13px !important;
+    }
+    [data-testid="stSidebar"] div.stButton > button {
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        padding: 4px 12px !important;
+        min-height: 32px !important;
+        transition: background-color 0.2s ease;
     }
 </style>
 """, unsafe_allow_html=True)
