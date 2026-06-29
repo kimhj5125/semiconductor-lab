@@ -37,19 +37,18 @@ st.markdown("""
         margin-top: -4px !important;
         margin-bottom: -4px !important;
     }
-        /* 숫자 입력칸: 위 드롭다운처럼 둥근 흰색 박스 */
+    /* 숫자 입력칸 + -/+ 버튼 = 하나의 둥근 흰색 박스 */
     [data-testid="stSidebar"] .stNumberInput {
-        background-color: transparent !important;
+        background-color: #ffffff !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
     }
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"],
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
-    }
-    [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"] {
         border: none !important;
+        box-shadow: none !important;
         min-height: 0 !important;
-        border-radius: 0.5rem !important;
-        overflow: hidden !important;
     }
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"]:focus-within {
         border: none !important;
