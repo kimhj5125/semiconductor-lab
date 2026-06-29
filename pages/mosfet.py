@@ -61,7 +61,6 @@ with st.sidebar:
     st.markdown("---")
     mos_type = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
     
-    # [수정] 피드백 반영: 입력 변수 배치 순서를 [문턱전압 -> 게이트전압 -> 드레인전압] 순으로 정렬
     if mos_type == "NMOS":
         v_th = st.slider("문턱 전압 (V_TH) [V]", 0.5, 2.0, 1.0, 0.1)
         v_gs = st.slider("게이트 전압 (V_GS) [V]", 0.0, 5.0, 3.0, 0.1)
@@ -77,17 +76,16 @@ with st.sidebar:
     ask_ai_btn = st.button("AI 실시간 해설 받기", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------
-# 3. 물리 계산 로직 (수식 오류 전면 교정 및 그래프 동기화)
+# 3. 물리 계산 로직
 # ---------------------------------------------------------
 k_n = 1.0
-lambda_mod = 0.02  # 채널 길이 변조 계수
+lambda_mod = 0.02
 
 abs_vgs = abs(v_gs)
 abs_vds = abs(v_ds)
 abs_vth = abs(v_th)
 v_ov = abs_vgs - abs_vth
 
-# [수정] 수식 전면 수정: 그래프 그리기 알고리즘과 내부 계산용 연산식을 완벽하게 동기화시킴
 if abs_vgs < abs_vth:
     op_region, i_d = "차단 영역 (Cutoff)", 0.0
 elif abs_vds < v_ov:
@@ -114,7 +112,7 @@ with col1:
     
     m1, m2 = st.columns(2)
     m1.metric("인가 전압 (|V_DS|)", f"{abs_vds:.2f} V")
-    m2.metric("드레인 전류 (|I_D|)", f"{i_d:.3f} mA")  # 정밀한 전류 비교 확인을 위해 소수점 3자리 확장
+    m2.metric("드레인 전류 (|I_D|)", f"{i_d:.3f} mA")
     
     st.markdown("<div class='header-text'>🧱 MOSFET 구조 시각화</div>", unsafe_allow_html=True)
     
@@ -166,15 +164,12 @@ with col2:
     st.markdown("<div class='header-text'>📈 전류-전압 특성 곡선</div>", unsafe_allow_html=True)
     
     v_ax = np.linspace(0, 5, 200)
-    v_b = np.linspace(0, 5, 200) # 포화 경계선 도메인 일치
-    
-    # 포화 상태 경계선 수식 매핑 및 동기화 조치
+    v_b = np.linspace(0, 5, 200)
     i_b = 0.5 * k_n * (v_b**2)
 
     fig_iv = go.Figure()
     fig_iv.add_trace(go.Scatter(x=v_b, y=i_b, mode='lines', line=dict(color='#cbd5e1', dash='dash', width=1.5), name="포화 영역 경계선"))
     
-    # [수정] 수식 동기화: 동적 변경되는 연산식 루프의 계산법을 상단 calc 필드와 완벽하게 한 방향으로 수정
     i_ax = []
     for v in v_ax:
         if abs_vgs < abs_vth:
@@ -200,7 +195,7 @@ with col2:
     fig_iv.update_yaxes(showgrid=True, gridcolor='rgba(128, 128, 128, 0.2)', range=[0, max(max(i_ax)*1.1, 2.0)])
     st.plotly_chart(fig_iv, use_container_width=True, theme="streamlit")
 
-# --- [Column 3] AI 실시간 해설 (크기 조절 가능) ---
+# --- [Column 3] AI 실시간 해설 ---
 with col3:
     with st.container(border=True):
         st.markdown("<div class='header-text' style='text-align: center; color: #3b82f6;'>🤖 AI 실시간 해설</div>", unsafe_allow_html=True)
@@ -225,4 +220,17 @@ with col3:
                         - I_D={i_d:.3f}mA
                         
                         [사용자 질문]
-                        {
+                        {user_query}
+                        
+                        [답변 지침]
+                        1. 불필요한 서론(인사말 등)이나 맺음말은 완전히 생략하되, 답변 전체를 반드시 **전문적이고 친절한 존댓말(해요체/하십시오체)**로 작성할 것. 반말 사용 금지.
+                        2. 표면적인 설명(예: 전압이 커서 전류가 흐른다)을 넘어, 페르미 준위(Fermi level), 에너지 밴드 벤딩(Energy band bending), 반전층(Inversion layer) 내 캐리어 농도, 공핍층(Depletion region) 역학, 전계(Electric field) 등 심도 있는 물성 지식을 포함할 것.
+                        3. 마크다운 불릿을 활용하여 가독성 높게 구조화할 것.
+                        """
+                        
+                        response = model.generate_content(prompt)
+                        st.markdown(response.text)
+                    except Exception as e:
+                        st.error(f"⚠️ AI 응답 생성 중 오류가 발생했습니다.\n\n상세 정보: {e}")
+        else:
+            st.info("👈 왼쪽 패널에서 설정을 마치고 [AI 실시간 해설 받기] 버튼을 눌러보세요.")
