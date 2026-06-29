@@ -50,33 +50,29 @@ st.markdown("""
 
     [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {
         font-size: 14px !important;
-        margin-top: 14px !important;
+        margin-top: 10px !important;
         margin-bottom: 0px !important;
     }
     [data-testid="stSidebar"] .stSlider {
         margin-top: 0px !important;
-        padding-bottom: 10px !important;
+        padding-bottom: 0px !important;
+        margin-bottom: -10px !important;
+    }
+    /* min/max 눈금을 트랙 바로 아래 붙이기 */
+    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMin"],
+    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMax"] {
+        margin-top: -14px !important;
     }
     [data-testid="stSidebar"] .stSelectbox {
         margin-top: -4px !important;
         margin-bottom: -4px !important;
     }
     [data-testid="stSidebar"] .stTextArea {
-        margin-top: -6px !important;
+        margin-top: 4px !important;
         margin-bottom: -4px !important;
     }
     [data-testid="stSidebar"] .stTextArea textarea {
         font-size: 13px !important;
-    }
-
-    /* min/max 눈금을 슬라이더 트랙에 가깝게 */
-    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMin"],
-    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMax"] {
-        margin-top: -12px !important;
-    }
-    /* 현재값 숫자는 트랙에서 위로 더 띄우기 */
-    [data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] {
-        top: -32px !important;
     }
 </style>
 """, unsafe_allow_html=True)
