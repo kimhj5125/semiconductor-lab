@@ -365,8 +365,7 @@ with col_mid:
     vgs_eff_plot = max(abs_vgs - abs_vth, 0.0)
 
     bend_sign = -1.0 if device == "NMOS" else +1.0
-    bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55   # 게이트에 의한 반전(채널 밴드 끌어내림) 크기
-    drop_d    = bend_sign * min(abs_vds, 3.0) * 0.4         # V_DS에 의한 전위 강하(방향은 소자별)
+    drop_d    = bend_sign * min(abs_vds, 3.0) * 0.4   # V_DS에 의한 전위 강하 (방향은 소자별)
 
     x_src = np.linspace(0.0, 1.0, 50)
     x_ch  = np.linspace(1.0, 2.0, 80)
@@ -374,13 +373,12 @@ with col_mid:
 
     # ── 물리 모델 ─────────────────────────────────────────
     #  • 소스/드레인 = 저저항 벌크 → 밴드 평탄
-    #  • 인가전압 V_DS(drop_d)는 '채널'에서 떨어진다 (실제로 채널·핀치오프 영역에 걸림)
-    #    → 소스↔드레인 페르미 준위 간격 = 정확히 qV_DS (게이트 영향 없음)
-    #  • 게이트 반전(bend_ch)은 채널 밴드를 페르미 준위 쪽으로 끌어내리는 dip으로 표현
-    #    (포화 영역에선 드레인 근처에서 다시 솟아오름 = 핀치오프/공핍 영역)
+    #  • 좌우 밴드 기울기는 V_DS(drop_d)가 결정한다 (V_GS가 아님!) → 채널에서 단조롭게 기욺
+    #  • 소스↔드레인 페르미 준위 간격 = 정확히 qV_DS
+    #  • 게이트의 역할(채널 형성)은 아래 'Inversion/Channel' 레이블 + 구조도로 표현
     t_ch   = (x_ch - 1.0)                       # 0 → 1
     ec_src = np.full_like(x_src, E0)
-    ec_ch  = E0 + drop_d * t_ch + bend_ch * np.sin(np.pi * t_ch)
+    ec_ch  = E0 + drop_d * t_ch                 # ★혹 제거: V_DS에 의한 완만한 단조 기울기만
     ec_drn = np.full_like(x_drn, E0 + drop_d)
 
     ev_src = ec_src - Eg
@@ -394,13 +392,13 @@ with col_mid:
     # ── 페르미 준위 ───────────────────────────────────────
     #  • NMOS: 소스/드레인 = n+ → E_f 는 전도대(E_c) 근처
     #  • PMOS: 소스/드레인 = p+ → E_f 는 가전자대(E_v) 근처
-    #  • 소스↔드레인 간격 = (E0+drop_d) - E0 = drop_d = qV_DS (게이트 영향 없음) ✓
+    #  • 소스↔드레인 간격 = drop_d = qV_DS ✓
     ef_offset  = -0.15 if device == "NMOS" else -(Eg - 0.15)
     ef_src_val = E0 + ef_offset
     ef_drn_val = (E0 + drop_d) + ef_offset
 
     # 채널 중앙 전도대 위치 (반전층 레이블 배치용)
-    ch_mid_ec = E0 + 0.5 * drop_d + bend_ch
+    ch_mid_ec = E0 + 0.5 * drop_d
 
     fig_band = go.Figure()
 
@@ -445,7 +443,7 @@ with col_mid:
     )
 
     # 동작 영역 레이블 (채널 밴드 근처, 밴드선과 겹치지 않게 배치)
-    label_y = ch_mid_ec - bend_sign * 0.35
+    label_y = ch_mid_ec
     if region == "Saturation" and vgs_eff_plot > 0:
         fig_band.add_annotation(
             x=1.5, y=label_y,
