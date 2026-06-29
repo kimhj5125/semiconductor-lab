@@ -46,6 +46,8 @@ st.markdown("""
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"] {
         border: none !important;
         min-height: 0 !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
     }
     [data-testid="stSidebar"] .stNumberInput input {
         height: 36px !important;
