@@ -210,8 +210,156 @@ with col_left:
 
     if region == "Saturation":
         ratio = float(np.clip(vds_sat / max(abs(vds), 0.01), 0.15, 0.85))
-        po_x = GATE_X_START + GATE_LEN * ratio if device == "NMOS" \
-               else GATE_X_END - GATE_LEN * ratio
+        po_x = GATE_X_START + GATE_LEN * ratio if device == "NMOS" else GATE_X_END - GATE_LEN * ratio
+        
+        # 괄호 짝을 명확하게 한 줄로 정리하여 SyntaxError 교정
         if device == "NMOS":
-            tri_pts = np.array([[GATE_X_START, SIO2_BOTTOM],
-                                [po_x, SIO2_BOTTOM],
+            tri_pts = np.array([[GATE_X_START, SIO2_BOTTOM], [po_x, SIO2_BOTTOM], [GATE_X_START, SIO2_BOTTOM - CH_THICK]])
+            dep_rect = patches.Rectangle((po_x, SIO2_BOTTOM - CH_THICK), GATE_X_END - po_x, CH_THICK, fc="#dce8f5", ec="#5a8abf", linestyle='--', alpha=0.6)
+            arr_start, arr_end = GATE_X_START + 0.2, po_x - 0.15
+        else:
+            tri_pts = np.array([[GATE_X_END, SIO2_BOTTOM], [po_x, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM - CH_THICK]])
+            dep_rect = patches.Rectangle((GATE_X_START, SIO2_BOTTOM - CH_THICK), po_x - GATE_X_START, CH_THICK, fc="#fbeee6", ec="#e67e22", linestyle='--', alpha=0.6)
+            arr_start, arr_end = GATE_X_END - 0.2, po_x + 0.15
+            
+        ax.add_patch(MplPolygon(tri_pts, closed=True, fc=ch_color, ec=ch_edge, lw=1.2, alpha=0.9, zorder=4))
+        ax.add_patch(dep_rect)
+        ax.plot(po_x, SIO2_BOTTOM, 'ro', ms=7, zorder=10)
+        ax.text(po_x, SIO2_BOTTOM - 0.8, "Pinch-off", ha="center", fontsize=7, color="red", fontweight="bold")
+        ax.annotate("", xy=(arr_end, SIO2_BOTTOM - CH_THICK * 0.4), xytext=(arr_start, SIO2_BOTTOM - CH_THICK * 0.4), arrowprops=dict(arrowstyle='->', color=carrier_color, lw=1.4), zorder=6)
+        
+    elif region == "Linear":
+        drain_thin = CH_THICK * (1.0 - 0.4 * (vds / (vds_sat if vds_sat > 0 else 1)))
+        trap_pts = np.array([[GATE_X_START, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM], [GATE_X_END, SIO2_BOTTOM - drain_thin], [GATE_X_START, SIO2_BOTTOM - CH_THICK]])
+        ax.add_patch(MplPolygon(trap_pts, closed=True, fc=ch_color, ec=ch_edge, lw=1.2, alpha=0.85, zorder=4))
+    else:
+        ax.text(5, SIO2_BOTTOM - 0.35, "No Channel (Cutoff)", ha="center", va="top", fontsize=8, color="#dc3545", bbox=dict(boxstyle='round,pad=0.3', fc='#fff0f0', ec='#dc3545', alpha=0.85))
+
+    ax.text(5, 7.8, f"Applied: V_GS={vgs:.1f}V | V_DS={vds:.1f}V", ha="center", fontsize=8, color="#444")
+    st.pyplot(fig_struct)
+    plt.close(fig_struct)
+
+
+# ── 2열: I-V 곡선 + 에너지밴드 ───────────────────────────────
+with col_mid:
+    st.markdown("### 📈 전류-전압 특성 곡선 & 에너지 밴드 다이어그램")
+
+    # ── I-V 특성 곡선 ──────────────────────────────────────
+    fig_iv, ax_iv = plt.subplots(figsize=(5.5, 3.4))
+    vds_space = np.linspace(0, 5, 300)
+
+    # 현재 VGS 곡선만 표시
+    id_curve = [calc_mosfet(device, vgs, vd, vth)[1] for vd in vds_space]
+    ax_iv.plot(vds_space, id_curve, color="#1a5276", lw=2.5, label=f"V_GS = {vgs:.1f} V")
+
+    # 포화 경계선
+    vgs_for_boundary = np.linspace(vth + 0.01, 5.0, 300)
+    sat_vds_pts, sat_id_pts = [], []
+    for vg_ in vgs_for_boundary:
+        vds_b = vg_ - vth
+        id_b  = 0.5 * (vg_ - vth) ** 2
+        if 0 <= vds_b <= 5.0:
+            sat_vds_pts.append(vds_b)
+            sat_id_pts.append(id_b)
+
+    ax_iv.plot(sat_vds_pts, sat_id_pts, color="#e74c3c", lw=1.8, linestyle='--', label="Saturation Boundary (V_DS = V_GS - V_TH)")
+
+    # 동작점
+    ax_iv.plot(vds, id_mA, 'ro', ms=9, zorder=8, markeredgecolor='white', markeredgewidth=1.5, label="Operating Point")
+
+    ax_iv.set_xlabel("|V_DS| (V)" if device == "PMOS" else "V_DS (V)", fontsize=9)
+    ax_iv.set_ylabel("I_D (mA)", fontsize=9)
+    ax_iv.set_xlim(0, 5); ax_iv.set_ylim(bottom=0)
+    ax_iv.legend(fontsize=7, loc='upper left', framealpha=0.9)
+    ax_iv.grid(True, alpha=0.25, linestyle=':')
+    ax_iv.set_title("I-V Characteristic Curve", fontsize=11, pad=6, fontweight='bold')
+    fig_iv.tight_layout()
+    st.pyplot(fig_iv)
+    plt.close(fig_iv)
+
+    # ── 에너지 밴드 다이어그램 ───────────────────────────────
+    st.markdown(f"**Energy Band Diagram ({device})**")
+    fig_band, ax_b = plt.subplots(figsize=(5.5, 3.2))
+
+    x_src = np.linspace(0.0, 0.8, 50)
+    x_ox  = np.linspace(0.8, 1.2, 20)
+    x_ch  = np.linspace(1.2, 2.8, 80)
+    x_drn = np.linspace(2.8, 3.6, 50)
+
+    sign = -1.0 if device == "NMOS" else 1.0
+    vgs_eff_plot = max(vgs - vth, 0.0)
+    bend_ch = sign * min(vgs_eff_plot, 2.5) * 0.55
+    drop_d  = sign * min(vds, 3.0) * 0.4
+    Eg = 1.12
+
+    ec_src_arr = np.full_like(x_src, 2.0)
+    ec_ox_arr  = np.linspace(2.0, 2.0 + bend_ch * 0.5, len(x_ox))
+    ec_ch_arr  = np.linspace(2.0 + bend_ch * 0.5, 2.0 + bend_ch, len(x_ch))
+    ec_drn_arr = np.linspace(2.0 + bend_ch, 2.0 + bend_ch + drop_d, len(x_drn))
+
+    ev_src_arr = ec_src_arr - Eg
+    ev_ox_arr  = ec_ox_arr  - Eg
+    ev_ch_arr  = ec_ch_arr  - Eg
+    ev_drn_arr = ec_drn_arr - Eg
+
+    x_all  = np.concatenate([x_src, x_ox, x_ch, x_drn])
+    ec_all = np.concatenate([ec_src_arr, ec_ox_arr, ec_ch_arr, ec_drn_arr])
+    ev_all = np.concatenate([ev_src_arr, ev_ox_arr, ev_ch_arr, ev_drn_arr])
+
+    ax_b.plot(x_all, ec_all, color='#e74c3c', lw=2.2, label="$E_c$ (Conduction Band)")
+    ax_b.plot(x_all, ev_all, color='#2980b9', lw=2.2, label="$E_v$ (Valence Band)")
+
+    ax_b.axvspan(0.8, 1.2, color='#f0f0f0', alpha=0.7, zorder=0)
+    ax_b.text(1.0, 2.55, "SiO2", ha='center', fontsize=7.5, color='#888', style='italic')
+
+    ef_level = 2.0 - Eg / 2 + 0.1
+    ax_b.axhline(ef_level, xmin=0 / 3.6, xmax=0.8 / 3.6, color='purple', lw=1.3, linestyle=':', alpha=0.8)
+    ax_b.axhline(ef_level, xmin=2.8 / 3.6, xmax=3.6 / 3.6, color='purple', lw=1.3, linestyle=':', alpha=0.8, label="$E_F$")
+
+    ax_b.annotate("", xy=(0.3, ec_src_arr[0]), xytext=(0.3, ev_src_arr[0]), arrowprops=dict(arrowstyle='<->', color='gray', lw=1.0))
+    ax_b.text(0.35, (ec_src_arr[0] + ev_src_arr[0]) / 2, f"Eg={Eg}eV", fontsize=6.5, color='gray', va='center')
+
+    if region == "Saturation" and vgs_eff_plot > 0:
+        ax_b.text(2.0, 2.0 + bend_ch - 0.25, "Inversion Layer\n(Saturation)", ha='center', fontsize=7, color='#27ae60', bbox=dict(boxstyle='round,pad=0.2', fc='#eafaf1', ec='#27ae60', alpha=0.85))
+    elif region == "Linear" and vgs_eff_plot > 0:
+        ax_b.text(2.0, 2.0 + bend_ch - 0.25, "Channel Formed\n(Linear)", ha='center', fontsize=7, color='#f39c12', bbox=dict(boxstyle='round,pad=0.2', fc='#fef9e7', ec='#f39c12', alpha=0.85))
+
+    ax_b.set_xticks([0.4, 1.0, 2.0, 3.2])
+    ax_b.set_xticklabels(["Source", "SiO2", "Channel", "Drain"], fontsize=8)
+    ax_b.set_ylabel("Energy (eV)", fontsize=9)
+    ax_b.set_title("Energy Band Diagram", fontsize=10, pad=6)
+    ax_b.legend(fontsize=7, loc='lower right', framealpha=0.9)
+    ax_b.grid(True, alpha=0.2, linestyle=':')
+    fig_band.tight_layout()
+    st.pyplot(fig_band)
+    plt.close(fig_band)
+
+
+# ── 3열: AI 해설 ──────────────────────────────────────────
+with col_right:
+    st.markdown("### ☉ AI 해설")
+    if "gemini_response" not in st.session_state:
+        st.session_state.gemini_response = ""
+
+    if not st.session_state.gemini_response:
+        st.info("👉 왼쪽 패널에서 설정을 마치고 [AI 실시간 해설 보기] 버튼을 눌러보세요.")
+
+    if ask_btn:
+        question = user_question.strip() if user_question.strip() else f"현재 {device} MOSFET 조건에 대해 물리적으로 쉽게 설명해줘."
+        full_prompt = f"""
+{device} MOSFET 조건 요약:
+- V_GS = {vgs:.1f}V, V_DS = {vds:.1f}V, V_TH = {vth:.1f}V
+- 현재 동작 영역: {region}
+- 드레인 전류: {id_mA:.3f} mA
+- 포화 전압: {vds_sat:.2f} V
+
+사용자 질문: {question}
+
+위의 소자 상태 데이터를 기반으로 전하 캐리어 이동 현상과 핀치오프 메커니즘을 전공자 관점에서 비유를 섞어 아주 쉽고 흥미롭게 한국어로 해설해줘. 4문장 내외로 마무리해줘.
+        """
+        with st.spinner("Gemini analyzing..."):
+            st.session_state.gemini_response = call_gemini(full_prompt)
+
+    if st.session_state.gemini_response:
+        st.markdown("---")
+        st.success(st.session_state.gemini_response)
