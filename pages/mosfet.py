@@ -73,8 +73,8 @@ st.markdown("""
     }
     /* 텍스트 영역 위 여백 */
     [data-testid="stSidebar"] .stTextArea {
-        margin-top: -6px !important;
-        margin-bottom: -4px !important;
+        margin-top: -4px !important;
+        margin-bottom: -2px !important;
     }
     [data-testid="stSidebar"] .stTextArea textarea {
         font-size: 13px !important;
