@@ -71,7 +71,7 @@ st.markdown("""
         color: #2c3e50 !important;
     }
 
-    /* 메인 영역 카드 스타일 (기존 유지) */
+    /* 메인 영역 카드 스타일 */
     .stat-card {
         background: #ffffff; border-radius: 12px; padding: 16px;
         border: 1px solid #eaeaea; box-shadow: 0px 4px 10px rgba(0,0,0,0.02); height: 100%;
@@ -460,11 +460,11 @@ with col2:
         textfont=dict(size=11,color='#dc2626',weight='bold'), name="Q점"))
     
     fig_iv.update_layout(
-        title=dict(text="I-V Characteristic Curve", font=dict(size=12, color="#64748b"), x=0.5, y=0.95),
+        title=dict(text="<b>I-V Characteristic Curve</b>", font=dict(size=13, color="black"), x=0.5, xanchor="center"),
         xaxis_title="V_CE [V]", yaxis_title="I_C [mA]",
         xaxis=dict(range=[-0.2, V_CC+1.2] if bjt_type=="NPN" else [-(V_CC+1.2), 0.2], showgrid=True, gridcolor='#f1f5f9', zeroline=True, zerolinecolor='#475569', zerolinewidth=1.5),
         yaxis=dict(range=[-0.5, sat_ic_mag+1.5] if bjt_type=="NPN" else [-(sat_ic_mag+1.5), 0.5], showgrid=True, gridcolor='#f1f5f9', zeroline=True, zerolinecolor='#475569', zerolinewidth=1.5),
-        height=320, margin=dict(l=10,r=10,t=40,b=10), showlegend=True,
+        height=320, margin=dict(l=10,r=10,t=50,b=10), showlegend=True,
         legend=dict(x=0.75 if bjt_type=="NPN" else 0.02, y=0.98 if bjt_type=="NPN" else 0.15,
                     bgcolor='rgba(255,255,255,0.9)', bordercolor='#cbd5e1', borderwidth=1, font=dict(size=9)),
         plot_bgcolor='white'
@@ -484,13 +484,11 @@ with col2:
         E_F_Base = 0.0; E_V_Base = -0.1; E_C_Base = E_V_Base + E_g
         E_F_Emitter = E_F_Base + v_be_eff; E_F_Collector = E_F_Base + v_bc_eff
         E_C_Emitter = E_F_Emitter - 0.05
-        # 물리적 수정: N형 Collector는 E_C가 E_F보다 살짝 위쪽에 있어야 함
         E_C_Collector = E_F_Collector + 0.15 
     else:
         E_F_Base = 0.0; E_C_Base = 0.1; E_V_Base = E_C_Base - E_g
         E_F_Emitter = E_F_Base - v_be_eff; E_F_Collector = E_F_Base - v_bc_eff
         E_V_Emitter = E_F_Emitter + 0.05
-        # 물리적 수정: P형 Collector는 E_V가 E_F보다 살짝 아래쪽에 있어야 함
         E_V_Collector = E_F_Collector - 0.15 
         E_C_Emitter = E_V_Emitter + E_g
         E_C_Collector = E_V_Collector + E_g
@@ -540,11 +538,12 @@ with col2:
 
     fig_band.add_vline(x=2.8, line=dict(color='#94a3b8',width=1.5,dash='dot'))
     fig_band.add_vline(x=5.2, line=dict(color='#94a3b8',width=1.5,dash='dot'))
+    
     fig_band.update_layout(
-        title=dict(text=f"Energy Band Diagram [{bjt_type}]", font=dict(size=12, color="#64748b"), x=0.5, y=0.95),
+        title=dict(text=f"<b>Energy Band Diagram ({bjt_type})</b>", font=dict(size=13, color="black"), x=0.5, xanchor="center"),
         xaxis=dict(visible=False, range=[-0.2,8.6]),
         yaxis=dict(visible=False, range=[min(ev_all)-0.35, max(ec_all)+0.8]),
-        height=320, margin=dict(l=10,r=10,t=40,b=10), showlegend=False, plot_bgcolor='white'
+        height=320, margin=dict(l=10,r=10,t=50,b=10), showlegend=False, plot_bgcolor='white'
     )
     st.plotly_chart(fig_band, use_container_width=True)
 
@@ -578,11 +577,5 @@ with col3:
         else:
             st.error("GEMINI_API_KEY가 설정되지 않았습니다.")
     else:
-        st.markdown(f"""
-        <div style='background:#f0f9ff; padding:16px; border-radius:10px;
-                    border:1px solid #bae6fd; font-size:0.88rem; font-weight:600;
-                    color:#0369a1; display:flex; align-items:flex-start; gap:8px;'>
-            <span>👉</span>
-            <span>왼쪽 패널에서 설정을 마치고 [AI 실시간 해설 보기] 버튼을 눌러보세요.</span>
-        </div>
-        """, unsafe_allow_html=True)
+        # [수정 완료] MOSFET 코드에서 사용하신 원본 st.info() 함수 그대로 적용!
+        st.info("👉 왼쪽 패널에서 설정을 마치고 [AI 실시간 해설 보기] 버튼을 눌러보세요.")
