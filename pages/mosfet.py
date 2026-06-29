@@ -371,14 +371,21 @@ with col_mid:
     x_ch  = np.linspace(1.0, 2.0, 80)
     x_drn = np.linspace(2.0, 3.0, 50)
 
-    # ── 물리 모델 ─────────────────────────────────────────
-    #  • 소스/드레인 = 저저항 벌크 → 밴드 평탄
-    #  • 좌우 밴드 기울기는 V_DS(drop_d)가 결정한다 (V_GS가 아님!) → 채널에서 단조롭게 기욺
-    #  • 소스↔드레인 페르미 준위 간격 = 정확히 qV_DS
-    #  • 게이트의 역할(채널 형성)은 아래 'Inversion/Channel' 레이블 + 구조도로 표현
-    t_ch   = (x_ch - 1.0)                       # 0 → 1
+    # ── 영역별 채널 밴드 모양 (V_DS 강하가 어디에 집중되는가) ──────
+    #  • Linear(트라이오드): 채널 = 저항 → 거의 균일한 기울기              (n≈1)
+    #  • Saturation: V_DS 대부분이 드레인 근처 핀치오프(공핍)에 걸림 → 드레인 쪽 급강하 (n↑)
+    #  • Cutoff: 채널 없음 → 역바이어스된 드레인 접합에 V_DS 강하   → 드레인 쪽 급강하
+    t_ch = (x_ch - 1.0)                                   # 0 → 1
+    if region == "Linear" and vgs_eff_plot > 0:
+        n_exp = 1.0
+    elif region == "Saturation" and vgs_eff_plot > 0:
+        ratio = float(np.clip(vds_sat / max(abs_vds, 0.01), 0.15, 0.85))  # V_DSAT / V_DS
+        n_exp = 1.0 + (1.0 - ratio) * 3.5                # 포화 깊을수록 드레인 쪽에 더 집중
+    else:
+        n_exp = 3.0                                      # 차단: 드레인 접합 공핍에 집중
+
     ec_src = np.full_like(x_src, E0)
-    ec_ch  = E0 + drop_d * t_ch                 # ★혹 제거: V_DS에 의한 완만한 단조 기울기만
+    ec_ch  = E0 + drop_d * (t_ch ** n_exp)
     ec_drn = np.full_like(x_drn, E0 + drop_d)
 
     ev_src = ec_src - Eg
@@ -389,16 +396,12 @@ with col_mid:
     ec_all = np.concatenate([ec_src, ec_ch, ec_drn])
     ev_all = np.concatenate([ev_src, ev_ch, ev_drn])
 
-    # ── 페르미 준위 ───────────────────────────────────────
-    #  • NMOS: 소스/드레인 = n+ → E_f 는 전도대(E_c) 근처
-    #  • PMOS: 소스/드레인 = p+ → E_f 는 가전자대(E_v) 근처
-    #  • 소스↔드레인 간격 = drop_d = qV_DS ✓
+    # ── 페르미 준위 (소자별 올바른 밴드 쪽 + 소스↔드레인 간격 = qV_DS) ──
     ef_offset  = -0.15 if device == "NMOS" else -(Eg - 0.15)
     ef_src_val = E0 + ef_offset
     ef_drn_val = (E0 + drop_d) + ef_offset
 
-    # 채널 중앙 전도대 위치 (반전층 레이블 배치용)
-    ch_mid_ec = E0 + 0.5 * drop_d
+    ch_mid_ec = float(ec_ch[len(ec_ch) // 2])   # 채널 중앙 전도대 (레이블 배치용)
 
     fig_band = go.Figure()
 
@@ -442,7 +445,7 @@ with col_mid:
         font=dict(size=9, color='gray'), xanchor='left'
     )
 
-    # 동작 영역 레이블 (채널 밴드 근처, 밴드선과 겹치지 않게 배치)
+    # 동작 영역 레이블
     label_y = ch_mid_ec
     if region == "Saturation" and vgs_eff_plot > 0:
         fig_band.add_annotation(
@@ -457,6 +460,17 @@ with col_mid:
             text="Channel Formed<br>(Linear)",
             showarrow=False, font=dict(size=9, color='#f39c12'),
             bgcolor='#fef9e7', bordercolor='#f39c12', borderwidth=1
+        )
+
+    # 포화 영역: 드레인 근처 핀치오프(급강하 지점) 화살표 표시
+    if region == "Saturation" and vgs_eff_plot > 0:
+        po_t = 0.85
+        fig_band.add_annotation(
+            x=1.0 + po_t, y=E0 + drop_d * (po_t ** n_exp),
+            text="Pinch-off", showarrow=True,
+            arrowhead=2, arrowsize=1, arrowwidth=1.2, arrowcolor="#e74c3c",
+            ax=16, ay=(-22 if device == "NMOS" else 22),
+            font=dict(size=8, color="#e74c3c")
         )
 
     fig_band.update_layout(
