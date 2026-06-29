@@ -366,7 +366,7 @@ with col_mid:
 
     bend_sign = -1.0 if device == "NMOS" else +1.0
     bend_ch   = bend_sign * min(vgs_eff_plot, 2.5) * 0.55
-    drop_d    = -min(abs_vds, 3.0) * 0.4
+    drop_d    = bend_sign * min(abs_vds, 3.0) * 0.4   # ★수정: PMOS에서도 드레인 기울기 방향이 맞도록 bend_sign 적용
 
     x_src = np.linspace(0.0, 1.0, 50)
     x_ch  = np.linspace(1.0, 2.0, 80)
@@ -384,7 +384,7 @@ with col_mid:
     ec_all = np.concatenate([ec_src, ec_ch, ec_drn])
     ev_all = np.concatenate([ev_src, ev_ch, ev_drn])
 
-    ef_src_val = E0 - Eg / 2 + 0.1
+    ef_src_val = E0 - 0.15            # ★수정: n+ 소스/드레인은 페르미 준위가 전도대(E_c) 근처
     ef_drn_val = ef_src_val + drop_d
 
     fig_band = go.Figure()
