@@ -61,6 +61,7 @@ with st.sidebar:
     st.markdown("---")
     mos_type = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
     
+    # 순서 최적화: 문턱 전압 -> 게이트 전압 -> 드레인 전압
     if mos_type == "NMOS":
         v_th = st.slider("문턱 전압 (V_TH) [V]", 0.5, 2.0, 1.0, 0.1)
         v_gs = st.slider("게이트 전압 (V_GS) [V]", 0.0, 5.0, 3.0, 0.1)
@@ -76,10 +77,10 @@ with st.sidebar:
     ask_ai_btn = st.button("AI 실시간 해설 받기", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------
-# 3. 물리 계산 로직
+# 3. 물리 계산 로직 (오류 교정 및 수식 동기화)
 # ---------------------------------------------------------
 k_n = 1.0
-lambda_mod = 0.02
+lambda_mod = 0.02  # 채널 길이 변조 효과 반영
 
 abs_vgs = abs(v_gs)
 abs_vds = abs(v_ds)
@@ -98,7 +99,7 @@ else:
 # ---------------------------------------------------------
 col1, col2, col3 = st.columns([1, 1.2, 1.2], gap="medium")
 
-# --- [Column 1] 소자 상태 및 구조 ---
+# --- [Column 1] 소자 상태 및 에너지 밴드 구조 시각화 ---
 with col1:
     st.markdown("<div class='header-text'>📊 실시간 소자 상태</div>", unsafe_allow_html=True)
     
@@ -129,6 +130,7 @@ with col1:
         pinch_color = "#1d4ed8"
         ch_border_color = "#6b21a8" 
 
+    # 반도체 내부 구조(기판, 게이트, 소스, 드레인) 그리기
     fig_struct.add_shape(type="rect", x0=0, y0=0, x1=10, y1=4, fillcolor=sub_color, line=dict(width=0))
     fig_struct.add_shape(type="rect", x0=3, y0=4, x1=7, y1=4.15, fillcolor="#cbd5e1", line=dict(width=0))
     fig_struct.add_shape(type="rect", x0=3, y0=4.15, x1=7, y1=5.0, fillcolor="#1e293b", line=dict(width=0))
@@ -139,6 +141,7 @@ with col1:
     fig_struct.add_shape(type="line", x0=0.5, y0=2.0, x1=9.5, y1=2.0, line=dict(color="#94a3b8", width=1.5, dash="dot"))
     fig_struct.add_annotation(x=5, y=1.6, text="<i>Depletion Region</i>", font=dict(color="#64748b", size=11), showarrow=False)
 
+    # 채널 역학 및 핀치오프(Pinch-off) 현상 다이어그램 매핑
     if op_region != "차단 영역 (Cutoff)":
         if op_region == "선형 영역 (Linear)":
             t_d = 4.0 - 0.2 * (1 - abs_vds / max(v_ov, 0.001))
@@ -195,7 +198,7 @@ with col2:
     fig_iv.update_yaxes(showgrid=True, gridcolor='rgba(128, 128, 128, 0.2)', range=[0, max(max(i_ax)*1.1, 2.0)])
     st.plotly_chart(fig_iv, use_container_width=True, theme="streamlit")
 
-# --- [Column 3] AI 실시간 해설 ---
+# --- [Column 3] AI 실시간 해설 (크기 조절 창 기능 온전히 유지) ---
 with col3:
     with st.container(border=True):
         st.markdown("<div class='header-text' style='text-align: center; color: #3b82f6;'>🤖 AI 실시간 해설</div>", unsafe_allow_html=True)
