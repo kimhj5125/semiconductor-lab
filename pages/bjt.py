@@ -44,7 +44,7 @@ st.markdown("""
         background-color: #ffffff !important;
     }
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"] {
-        border: 1px solid #d1d5db !important;
+        border: none !important;
         min-height: 0 !important;
     }
     [data-testid="stSidebar"] .stNumberInput input {
