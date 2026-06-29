@@ -37,8 +37,10 @@ st.markdown("""
         margin-top: -4px !important;
         margin-bottom: -4px !important;
     }
-        /* 숫자 입력칸: 위아래 회색 없이 흰색으로 꽉 차게 */
-    [data-testid="stSidebar"] .stNumberInput,
+        /* 숫자 입력칸: 위 드롭다운처럼 둥근 흰색 박스 */
+    [data-testid="stSidebar"] .stNumberInput {
+        background-color: transparent !important;
+    }
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"],
     [data-testid="stSidebar"] .stNumberInput div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
@@ -48,6 +50,10 @@ st.markdown("""
         min-height: 0 !important;
         border-radius: 0.5rem !important;
         overflow: hidden !important;
+    }
+    [data-testid="stSidebar"] .stNumberInput div[data-baseweb="input"]:focus-within {
+        border: none !important;
+        box-shadow: none !important;
     }
     [data-testid="stSidebar"] .stNumberInput input {
         height: 36px !important;
