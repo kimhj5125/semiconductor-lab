@@ -99,6 +99,7 @@ with st.sidebar:
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
 
     st.markdown("**문턱 전압 |V_TH| (V)**")
+    st.sidebar.write("")
     vth = st.slider("V_TH", 0.0, 2.0,
                     value=float(st.session_state["vth_val"]),
                     step=0.1, key="vth_slide",
@@ -106,6 +107,7 @@ with st.sidebar:
     st.session_state["vth_val"] = vth
 
     st.markdown("**게이트 전압 V_GS (V)**")
+    st.sidebar.write("")
     vgs = st.slider("V_GS", 0.0, 5.0,
                     value=float(st.session_state["vgs_val"]),
                     step=0.1, key="vgs_slide",
@@ -113,6 +115,7 @@ with st.sidebar:
     st.session_state["vgs_val"] = vgs
 
     st.markdown("**드레인 전압 V_DS (V)**")
+    st.sidebar.write("")
     vds = st.slider("V_DS", 0.0, 5.0,
                     value=float(st.session_state["vds_val"]),
                     step=0.1, key="vds_slide",
