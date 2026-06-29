@@ -162,7 +162,7 @@ with col_left:
             <div style='font-size:11px;color:#666;margin-bottom:2px'>드레인전류 |I_D|</div>
             <div style='font-size:28px;font-weight:700;color:#1a1a2e'>{id_mA:.2f} mA</div>
         </div>""", unsafe_allow_html=True)
-    st.divider()
+    st.container().markdown("")
 
     # ── MOSFET 구조 시각화 ───────────────────────────────
     st.markdown("### 📐 MOSFET 구조")
@@ -312,7 +312,7 @@ with col_mid:
     fig_iv.update_xaxes(showgrid=True, gridcolor='rgba(128,128,128,0.2)')
     fig_iv.update_yaxes(showgrid=True, gridcolor='rgba(128,128,128,0.2)')
     st.plotly_chart(fig_iv, use_container_width=True, theme="streamlit")
-    st.divider()
+    st.container().markdown("")
 
     # ── 에너지 밴드 다이어그램 (plotly, Source-Channel-Drain 3구간) ──
     Eg   = 1.12
