@@ -130,7 +130,7 @@ with st.sidebar:
         placeholder="e.g. 현재 전압 조건 상태에 대해 물리적으로 쉽게 설명해줘.",
         label_visibility="collapsed"
     )
-    ask_btn = st.button("☉ AI 실시간 해설 보기", use_container_width=True, type="primary")
+    ask_btn = st.button("🤖 AI 실시간 해설 보기", use_container_width=True, type="primary")
     
 # ── MOSFET 물리 계산 ─────────────────────────────────────────
 def calc_mosfet(device, vgs, vds, vth, Kn=1.0, Kp=1.0):
@@ -470,7 +470,7 @@ with col_mid:
 
 # ── 3열: AI 해설 ─────────────────────────────────────────────
 with col_right:
-    st.markdown("### ☉ AI 해설")
+    st.markdown("### 🤖 AI 해설")
     if "gemini_response" not in st.session_state:
         st.session_state.gemini_response = ""
 
