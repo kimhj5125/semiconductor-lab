@@ -66,7 +66,7 @@ st.markdown("""
 with st.sidebar:
     # 🏠 최상단에 홈으로 돌아가기 버튼 추가
     if st.button("⬅ 홈으로 돌아가기", use_container_width=True):
-        st.switch_page("app.py")  # 메인 파일명이 app.py가 아니라면 해당 파일명으로 바꿔주세요!
+        st.switch_page("app.py") 
         
     # 버튼과 패널 제목 사이 선 없이 여백 주기 (15픽셀)
     st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
@@ -75,7 +75,7 @@ with st.sidebar:
     st.markdown("## 🎛️ 제어 및 입력 패널")
 
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
-    st.divider()
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
 
     st.markdown("**문턱 전압 |V_TH| (V)**")
     vth = st.slider("V_TH", 0.0, 2.0,
@@ -98,7 +98,7 @@ with st.sidebar:
                     label_visibility="collapsed")
     st.session_state["vds_val"] = vds
 
-    st.divider()
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
     st.markdown("**🤖 ASK AI**")
     user_question = st.text_area(
         "", height=100,
