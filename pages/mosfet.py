@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── CSS 스타일 ───────────────────────────────────────────────
+# ── CSS 스타일 (사이드바 컴팩트화 스타일 추가) ─────────────────
 st.markdown("""
 <style>
     [data-testid="stSidebarUserContent"] {
@@ -30,7 +30,7 @@ st.markdown("""
         background-color: #2a2a4e !important;
         border-color: #555 !important;
         color: white !important;
-   }     
+    }     
     [data-testid="stSidebarNav"] {
         display: none !important;
     }
@@ -45,6 +45,15 @@ st.markdown("""
     [data-testid="stSidebar"] div.stButton > button:hover {
         background-color: #3b3b6d !important;   /* 마우스 올렸을 때 자연스럽게 밝아짐 */
         border-color: #777 !important;
+    }
+
+    /* 사이드바 내부 요소 간 간격 극대화 축소 (컴팩트 스크롤 방지용) */
+    [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {
+        margin-bottom: -5px !important;
+    }
+    [data-testid="stSidebar"] .stSlider {
+        margin-top: -10px !important;
+        padding-bottom: 5px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -72,21 +81,19 @@ for key, default in [("vth_val", 1.0), ("vgs_val", 2.6), ("vds_val", 3.7)]:
     if key not in st.session_state:
         st.session_state[key] = default
 
-# ── 사이드바 ─────────────────────────────────────────────────
+# ── 사이드바 (Compact Layout 적용) ───────────────────────────
 with st.sidebar:
-    # 🏠 최상단에 홈으로 돌아가기 버튼 추가
+    # 🏠 홈으로 돌아가기 버튼
     if st.button("⬅ 홈으로 돌아가기", use_container_width=True):
         st.switch_page("app.py") 
         
-    # 버튼과 패널 제목 사이 선 없이 여백 주기 (15픽셀)
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-
-    # 🎛️ 제어 및 입력 패널 시작
-    st.markdown("## 🎛️ 제어 및 입력 패널")
+    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+    st.markdown("### 🎛️ 제어 및 입력 패널")
 
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
 
+    # 슬라이더 컴팩트 배치 적용
     st.markdown("**문턱 전압 |V_TH| (V)**")
     vth = st.slider("V_TH", 0.0, 2.0,
                     value=float(st.session_state["vth_val"]),
@@ -108,10 +115,10 @@ with st.sidebar:
                     label_visibility="collapsed")
     st.session_state["vds_val"] = vds
 
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
     st.markdown("**🤖 ASK AI**")
     user_question = st.text_area(
-        "", height=100,
+        "", height=65,  # 한눈에 보이도록 높이 축소
         placeholder="e.g. 현재 전압 조건 상태에 대해 물리적으로 쉽게 설명해줘.",
         label_visibility="collapsed"
     )
@@ -388,7 +395,7 @@ with col_mid:
     fig_band.add_trace(go.Scatter(
         x=[0.0, 1.0], y=[ef_src_val, ef_src_val], mode='lines',
         line=dict(color='purple', width=1.5, dash='dot'),
-        name="E<sub>F</sub>"
+        name="E<sub>f</sub>"
     ))
     fig_band.add_trace(go.Scatter(
         x=[2.0, 3.0], y=[ef_drn_val, ef_drn_val], mode='lines',
@@ -454,9 +461,7 @@ with col_mid:
     st.plotly_chart(fig_band, use_container_width=True, theme="streamlit")
 
 
-# ════════════════════════════════════════════════════════════
-# 3열: AI 해설
-# ════════════════════════════════════════════════════════════
+# ── 3열: AI 해설 ─────────────────────────────────────────────
 with col_right:
     st.markdown("### ☉ AI 해설")
     if "gemini_response" not in st.session_state:
