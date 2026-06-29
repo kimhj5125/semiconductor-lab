@@ -1,4 +1,6 @@
 streamlit
 numpy
+matplotlib
 plotly
+requests
 google-generativeai
