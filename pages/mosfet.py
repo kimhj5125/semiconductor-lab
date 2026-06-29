@@ -149,7 +149,7 @@ def calc_mosfet(device, vgs, vds, vth, Kn=1.0, Kp=1.0):
         vgs_real = -vgs; vds_real = -vds; vth_real = -vth
         vgs_eff  = vth_real - vgs_real
         vds_sat  = max(vgs_eff, 0.0)
-        if vgs_real > vth_real:
+        if vgs_real >= vth_real:
             region = "Cutoff";  id_mA = 0.0
         elif abs(vds_real) < vgs_eff:
             region = "Linear"
