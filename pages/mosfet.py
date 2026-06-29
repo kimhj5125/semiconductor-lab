@@ -177,34 +177,55 @@ col_left, col_mid, col_right = st.columns([1, 1.4, 1])
 # 1열: 소자 상태 + 구조 시각화
 # ════════════════════════════════════════════════════════════
 with col_left:
-    st.markdown("### 📊 소자 상태")
+    st.markdown("<div class='section-header'>📊 소자 상태</div>", unsafe_allow_html=True)
+    
+    # 동작 영역별 테마 색상 설정
     region_color = (
-        "#28a745" if region == "Saturation" else
-        "#ffc107" if region == "Linear" else
-        "#dc3545"
+        "#22c55e" if region == "Saturation" else  # 포화 영역 (초록)
+        "#eab308" if region == "Linear" else      # 선형 영역 (노랑)
+        "#ef4444"                                 # 차단 영역 (빨강)
     )
+    
+    # [수정] 이미지와 완벽히 일치하는 4변수 격자형 카드 컴포넌트
     st.markdown(f"""
-    <div style='margin-bottom:8px'>
-        <div style='font-size:13px;color:#666;margin-bottom:4px'>Operating Region</div>
-        <div style='font-size:26px;font-weight:700;color:{region_color}'>{region_kr}</div>
+    <div style='background: #ffffff; border-radius: 20px; padding: 32px;
+                border: 1px solid #f1f5f9; box-shadow: 0px 8px 24px rgba(148, 163, 184, 0.05);'>
+        
+        <div style='font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;'>
+            OPERATING REGION
+        </div>
+        
+        <div style='font-size: 2.1rem; font-weight: 800; color: {region_color}; letter-spacing: -0.02em; margin-bottom: 6px;'>
+            {region_kr}
+        </div>
+        
+        <div style='font-size: 1.15rem; color: {region_color}e0; font-weight: 600; margin-bottom: 32px;'>
+            ({region})
+        </div>
+        
+        <div style='display: grid; grid-template-columns: 1fr 1fr; row-gap: 24px; column-gap: 16px;'>
+            <div>
+                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>문턱 전압 |V_TH|</div>
+                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vth:.2f} V</div>
+            </div>
+            <div>
+                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>드레인전류 |I_D|</div>
+                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{id_mA:.2f} mA</div>
+            </div>
+            <div>
+                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>게이트 전압 V_GS</div>
+                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vgs:.2f} V</div>
+            </div>
+            <div>
+                <div style='font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px;'>인가전압 |V_DS|</div>
+                <div style='font-size: 1.55rem; font-weight: 700; color: #1e293b;'>{vds:.2f} V</div>
+            </div>
+        </div>
+        
     </div>
+    <div style='margin-bottom: 24px;'></div>
     """, unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f"""
-        <div style='padding:8px 0'>
-            <div style='font-size:11px;color:#666;margin-bottom:2px'>인가전압 |V_DS|</div>
-            <div style='font-size:28px;font-weight:700;color:#1a1a2e'>{vds:.2f} V</div>
-        </div>""", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"""
-        <div style='padding:8px 0'>
-            <div style='font-size:11px;color:#666;margin-bottom:2px'>드레인전류 |I_D|</div>
-            <div style='font-size:28px;font-weight:700;color:#1a1a2e'>{id_mA:.2f} mA</div>
-        </div>""", unsafe_allow_html=True)
-    st.container().markdown("")
-
+    
     # ── MOSFET 구조 시각화 ───────────────────────────────
     st.markdown("### 📐 MOSFET 구조")
     fig_struct, ax = plt.subplots(figsize=(5, 4.5))
