@@ -58,6 +58,10 @@ st.markdown("""
         padding-bottom: 0px !important;
         margin-bottom: -10px !important;
     }
+    /* 현재값 숫자 위로 올리기 */
+    [data-testid="stSidebar"] [data-testid="stSliderThumbValue"] {
+        top: -30px !important;
+    }
     /* min/max 눈금을 트랙 바로 아래 붙이기 */
     [data-testid="stSidebar"] [data-testid="stSliderTickBar"] {
         margin-top: -20px !important;
