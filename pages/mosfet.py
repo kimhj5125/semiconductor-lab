@@ -97,6 +97,7 @@ with st.sidebar:
     st.markdown("### 🎛️ 제어 및 입력 패널")
 
     device = st.selectbox("소자 타입 선택", ["NMOS", "PMOS"])
+    st.sidebar.divider()
 
     st.markdown("**문턱 전압 |V_TH| (V)**")
     st.sidebar.write("")
@@ -121,6 +122,7 @@ with st.sidebar:
                     step=0.1, key="vds_slide",
                     label_visibility="collapsed")
     st.session_state["vds_val"] = vds
+    st.sidebar.divider()
 
     st.markdown("**🤖 ASK AI**")
     user_question = st.text_area(
